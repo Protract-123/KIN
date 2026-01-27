@@ -1,33 +1,38 @@
 package active_window
 
 import (
+	"KIN/config"
 	"KIN/kbhid"
 	"log"
 	"time"
-
-	"github.com/sstallion/go-hid"
 )
 
-func SendActiveWindowData(device *hid.Device, cfg kbhid.KeyboardHIDInfo) {
+func SendActiveWindowData() {
 	window := FetchActiveWindowName()
 
 	if window != "" {
-		data := kbhid.PrepareCStringPayload(
-			window,
-			cfg.ReportLength-1,
-		)
 
-		payload := kbhid.BuildPayload(
-			kbhid.PayloadActiveWindow,
-			data,
-			cfg.ReportLength,
-		)
+		keyboards := config.PayloadToKeyboards["volume"]
 
-		if err := kbhid.SendRawReport(device, cfg, payload); err != nil {
-			log.Printf("write failed: %v", err)
+		for _, cfg := range keyboards {
+
+			data := kbhid.PrepareCStringPayload(
+				window,
+				cfg.ReportLength-1,
+			)
+
+			payload := kbhid.BuildPayload(
+				kbhid.PayloadActiveWindow,
+				data,
+				cfg.ReportLength,
+			)
+
+			if err := kbhid.SendRawReport(device, cfg, payload); err != nil {
+				log.Printf("write failed: %v", err)
+			}
 		}
+
+		time.Sleep(time.Second)
+
 	}
-
-	time.Sleep(time.Second)
-
 }

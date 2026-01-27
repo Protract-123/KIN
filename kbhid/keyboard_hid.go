@@ -1,27 +1,20 @@
 package kbhid
 
 import (
+	"KIN/config"
 	"errors"
 
 	"github.com/sstallion/go-hid"
 )
 
-type KeyboardHIDInfo struct {
-	VendorID     uint16
-	ProductID    uint16
-	UsagePage    uint16
-	Usage        uint16
-	ReportLength int
-}
-
 // FindRawHIDDevice finds and opens the first matching RAW HID interface
-func FindRawHIDDevice(cfg KeyboardHIDInfo) (*hid.Device, error) {
+func FindRawHIDDevice(cfg config.KeyboardConfig) (*hid.Device, error) {
 	var devicePath string
 
-	err := hid.Enumerate(cfg.VendorID, cfg.ProductID,
+	err := hid.Enumerate(cfg.VendorID.GetUint16(), cfg.ProductID.GetUint16(),
 		func(info *hid.DeviceInfo) error {
-			if info.UsagePage == cfg.UsagePage &&
-				info.Usage == cfg.Usage {
+			if info.UsagePage == cfg.UsagePage.GetUint16() &&
+				info.Usage == cfg.Usage.GetUint16() {
 				devicePath = info.Path
 				// Stop enumeration early
 				return errors.New("device found")
@@ -41,7 +34,7 @@ func FindRawHIDDevice(cfg KeyboardHIDInfo) (*hid.Device, error) {
 }
 
 // SendRawReport sends a RAW HID report using the provided config
-func SendRawReport(dev *hid.Device, cfg KeyboardHIDInfo, payload []byte) error {
+func SendRawReport(dev *hid.Device, cfg config.KeyboardConfig, payload []byte) error {
 	report := make([]byte, cfg.ReportLength+1) // Report ID + payload
 	copy(report[1:], payload)
 
