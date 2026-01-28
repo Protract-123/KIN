@@ -1,38 +1,41 @@
 package active_window
 
 import (
-	"KIN/config"
-	"KIN/kbhid"
+	"KIN/app"
+	"fmt"
 	"log"
 	"time"
 )
 
+const payloadKey = "active_window"
+
 func SendActiveWindowData() {
+	payloadInfo := app.ActiveConfig.Payloads[payloadKey]
+	if !payloadInfo.Active {
+		return
+	}
+
 	window := FetchActiveWindowName()
 
 	if window != "" {
+		keyboards := app.PayloadToKeyboards[payloadKey]
 
-		keyboards := config.PayloadToKeyboards["volume"]
+		for _, name := range keyboards {
+			keyboard := app.ActiveConfig.Keyboards[name]
 
-		for _, cfg := range keyboards {
+			data := app.PrepareCString(window, keyboard.ReportLength-1) // First byte reserved for Payload Type
+			payload := app.BuildPayload(app.PayloadActiveWindow, data, keyboard.ReportLength)
 
-			data := kbhid.PrepareCStringPayload(
-				window,
-				cfg.ReportLength-1,
-			)
+			if keyboard.HIDDevice == nil {
+				fmt.Printf("Keyboard %s not initialized\n", name)
+				continue
+			}
 
-			payload := kbhid.BuildPayload(
-				kbhid.PayloadActiveWindow,
-				data,
-				cfg.ReportLength,
-			)
-
-			if err := kbhid.SendRawReport(device, cfg, payload); err != nil {
-				log.Printf("write failed: %v", err)
+			if err := app.SendRawReport(keyboard.HIDDevice, keyboard, payload); err != nil {
+				log.Printf("Write to keyboard %s failed: %v", name, err)
 			}
 		}
-
-		time.Sleep(time.Second)
-
 	}
+
+	time.Sleep(time.Duration(payloadInfo.RefreshRate) * time.Millisecond)
 }

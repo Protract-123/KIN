@@ -1,16 +1,16 @@
-package config
+package app
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
-	"github.com/sstallion/go-hid"
 )
 
-var AppName = "KIN"
+var ApplicationName = "KIN"
 
-var DefaultConfig = AppConfig{
+var DefaultConfig = ApplicationConfig{
 	Keyboards: map[string]KeyboardConfig{
 		"default": {
 			VendorID:       0xFEED,
@@ -18,7 +18,9 @@ var DefaultConfig = AppConfig{
 			UsagePage:      0xFF60,
 			Usage:          0x61,
 			ReportLength:   32,
-			ActivePayloads: []string{"volume"},
+			ActivePayloads: []string{"volume", "active_window"},
+
+			HIDDevice: nil,
 		},
 	},
 	Payloads: map[string]PayloadConfig{
@@ -33,10 +35,8 @@ var DefaultConfig = AppConfig{
 	},
 }
 
-var ActiveConfig = AppConfig{}
-
-var PayloadToKeyboards = map[string][]KeyboardConfig{}
-var KeyboardToDevice = map[string]hid.Device{}
+var ActiveConfig = ApplicationConfig{}
+var PayloadToKeyboards = map[string][]string{}
 
 func InitializeConfig() error {
 	base, err := os.UserConfigDir()
@@ -44,7 +44,7 @@ func InitializeConfig() error {
 		return err
 	}
 
-	configDir := filepath.Join(base, AppName)
+	configDir := filepath.Join(base, ApplicationName)
 	configPath := filepath.Join(configDir, "config.toml")
 
 	err = os.MkdirAll(configDir, 0700)
@@ -81,7 +81,7 @@ func LoadConfig() error {
 		return err
 	}
 
-	configPath := filepath.Join(base, AppName, "config.toml")
+	configPath := filepath.Join(base, ApplicationName, "config.toml")
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {
@@ -95,18 +95,26 @@ func LoadConfig() error {
 	return nil
 }
 
-func BuildPayloadToKeyboards(cfg AppConfig) {
-	result := make(map[string][]KeyboardConfig)
+func BuildPayloadToKeyboards(cfg ApplicationConfig) {
+	result := make(map[string][]string)
 
-	for _, kb := range cfg.Keyboards {
+	for name, kb := range cfg.Keyboards {
 		for _, payload := range kb.ActivePayloads {
-			result[payload] = append(result[payload], kb)
+			result[payload] = append(result[payload], name)
 		}
 	}
 
 	PayloadToKeyboards = result
 }
 
-func BuildKeyboardToDevices() {
-
+func BuildKeyboardToDevices(cfg *ApplicationConfig) {
+	for name, kb := range cfg.Keyboards {
+		device, err := FindRawHIDDevice(kb)
+		if err != nil {
+			fmt.Printf("Unable to find Raw HID device for keyboard %s\n", name)
+			continue
+		}
+		kb.HIDDevice = device
+		cfg.Keyboards[name] = kb
+	}
 }

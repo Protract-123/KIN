@@ -1,4 +1,4 @@
-package kbhid
+package app
 
 type PayloadType uint8
 
@@ -10,16 +10,10 @@ const (
 
 // BuildPayload creates a payload based on the payload type, the data and the
 // max payload size which can be sent
-func BuildPayload(
-	payloadType PayloadType,
-	data []byte,
-	payloadSize int,
-) []byte {
+func BuildPayload(payloadType PayloadType, data []byte, payloadSize int) []byte {
 	payload := make([]byte, payloadSize)
-
 	payload[0] = byte(payloadType)
 
-	// Copy data after type byte
 	maxDataLen := payloadSize - 1
 	if len(data) > maxDataLen {
 		data = data[:maxDataLen]
@@ -29,9 +23,8 @@ func BuildPayload(
 	return payload
 }
 
-// PrepareCStringPayload converts a string into a null-terminated,
-// size-limited RAW HID payload
-func PrepareCStringPayload(s string, maxLen int) []byte {
+// PrepareCString converts a string into a null-terminated CString
+func PrepareCString(s string, maxLen int) []byte {
 	data := []byte(s + "\x00")
 
 	if len(data) > maxLen {

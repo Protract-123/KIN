@@ -1,47 +1,52 @@
 package main
 
 import (
-	"KIN/config"
+	"KIN/active_window"
+	"KIN/app"
+	"KIN/ui"
+	"KIN/volume"
+	"log"
+	"os"
+
+	"github.com/mappu/miqt/qt6"
+	"github.com/sstallion/go-hid"
 )
 
+var InfoFunctions = []func(){
+	volume.SendVolumeData,
+	active_window.SendActiveWindowData,
+}
+
 func main() {
-	//if err := hid.Init(); err != nil {
-	//	log.Fatalf("hid init failed: %v", err)
-	//}
-	//defer hid.Exit()
-	//
-	//dev, err := kbhid.FindRawHIDDevice(DefaultKeyboard)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//defer dev.Close()
-	//
-	//qt6.NewQApplication(os.Args)
-	//configWindow := ui.NewConfigWindow()
-	//ui.CreateTray(configWindow)
-	//
-	//go func() {
-	//	for {
-	//		active_window.SendActiveWindowData(dev, DefaultKeyboard)
-	//	}
-	//}()
-	//go func() {
-	//	for {
-	//		volume.SendVolumeData(dev, DefaultKeyboard)
-	//	}
-	//}()
-	//
-	//qt6.QApplication_Exec()
+	if err := hid.Init(); err != nil {
+		log.Fatalf("hid init failed: %v", err)
+	}
+	defer hid.Exit()
 
-	err := config.InitializeConfig()
+	qt6.NewQApplication(os.Args)
+	configWindow := ui.NewConfigWindow()
+	ui.CreateTray(configWindow)
+
+	err := app.InitializeConfig()
 	if err != nil {
 		return
 	}
 
-	err = config.LoadConfig()
+	err = app.LoadConfig()
 	if err != nil {
 		return
 	}
 
-	config.BuildPayloadToKeyboards(config.ActiveConfig)
+	app.BuildPayloadToKeyboards(app.ActiveConfig)
+	app.BuildKeyboardToDevices(&app.ActiveConfig)
+
+	for _, function := range InfoFunctions {
+		go func() {
+			for {
+				function()
+			}
+		}()
+	}
+
+	qt6.QApplication_Exec()
 }

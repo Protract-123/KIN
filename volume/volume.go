@@ -1,33 +1,41 @@
 package volume
 
 import (
-	"KIN/kbhid"
-	"context"
+	"KIN/app"
+	"fmt"
 	"log"
 	"time"
-
-	"github.com/sstallion/go-hid"
 )
 
-func SendVolumeData(device *hid.Device, cfg kbhid.KeyboardHIDInfo) {
-	volume, _ := FetchVolume(context.Background())
+const payloadKey = "volume"
+
+func SendVolumeData() {
+	payloadInfo := app.ActiveConfig.Payloads[payloadKey]
+	if !payloadInfo.Active {
+		return
+	}
+
+	volume, _ := FetchVolume()
 
 	if volume != "" {
-		data := kbhid.PrepareCStringPayload(
-			volume,
-			cfg.ReportLength-1,
-		)
+		keyboards := app.PayloadToKeyboards[payloadKey]
 
-		payload := kbhid.BuildPayload(
-			kbhid.PayloadVolume,
-			data,
-			cfg.ReportLength,
-		)
+		for _, name := range keyboards {
+			keyboard := app.ActiveConfig.Keyboards[name]
 
-		if err := kbhid.SendRawReport(device, cfg, payload); err != nil {
-			log.Printf("write failed: %v", err)
+			data := app.PrepareCString(volume, keyboard.ReportLength-1) // First byte reserved for Payload Type
+			payload := app.BuildPayload(app.PayloadVolume, data, keyboard.ReportLength)
+
+			if keyboard.HIDDevice == nil {
+				fmt.Printf("Keyboard %s not initialized\n", name)
+				continue
+			}
+
+			if err := app.SendRawReport(keyboard.HIDDevice, keyboard, payload); err != nil {
+				log.Printf("Write to keyboard %s failed: %v", name, err)
+			}
 		}
 	}
 
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(time.Duration(payloadInfo.RefreshRate) * time.Millisecond)
 }

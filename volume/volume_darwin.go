@@ -10,9 +10,9 @@ import (
 	"strings"
 )
 
-func FetchVolume(ctx context.Context) (string, error) {
+func FetchVolume() (string, error) {
 	cmd := exec.CommandContext(
-		ctx,
+		context.Background(),
 		"osascript",
 		"-e", "output volume of (get volume settings)",
 	)

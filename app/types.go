@@ -1,9 +1,11 @@
-package config
+package app
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/sstallion/go-hid"
 )
 
 type PayloadConfig struct {
@@ -18,10 +20,11 @@ type KeyboardConfig struct {
 	Usage        HexUint16 `toml:"usage"`
 	ReportLength int       `toml:"report_length"`
 
-	ActivePayloads []string `toml:"active_payloads"`
+	ActivePayloads []string    `toml:"active_payloads"`
+	HIDDevice      *hid.Device `toml:"-"`
 }
 
-type AppConfig struct {
+type ApplicationConfig struct {
 	Keyboards map[string]KeyboardConfig `toml:"keyboards"`
 	Payloads  map[string]PayloadConfig  `toml:"payloads"`
 }
