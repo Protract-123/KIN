@@ -2,7 +2,6 @@ package active_window
 
 import (
 	"KIN/app"
-	"fmt"
 	"log"
 	"time"
 )
@@ -27,7 +26,7 @@ func SendActiveWindowData() {
 			payload := app.BuildPayload(app.PayloadActiveWindow, data, keyboard.ReportLength)
 
 			if keyboard.HIDDevice == nil {
-				fmt.Printf("Keyboard %s not initialized\n", name)
+				log.Printf("Keyboard %s not initialized\n", name)
 				continue
 			}
 

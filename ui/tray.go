@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"os"
-
 	"github.com/mappu/miqt/qt6"
 )
 
@@ -33,15 +31,6 @@ func CreateTray(win *qt6.QMainWindow) {
 
 	quitAction.OnTriggered(func() {
 		tray.Hide()
-
-		//for name := range app.ActiveConfig.Keyboards {
-		//	err := app.ActiveConfig.Keyboards[name].HIDDevice.Close()
-		//	if err != nil {
-		//		continue
-		//	}
-		//}
-
-		os.Exit(0)
+		qt6.QCoreApplication_Exit()
 	})
-
 }

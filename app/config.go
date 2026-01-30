@@ -1,7 +1,7 @@
 package app
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -60,7 +60,13 @@ func InitializeConfig() error {
 		}
 		return err
 	}
-	defer configFile.Close()
+
+	defer func(configFile *os.File) {
+		err := configFile.Close()
+		if err != nil {
+			log.Printf("Error closing config file: %v", err)
+		}
+	}(configFile)
 
 	marshal, err := toml.Marshal(DefaultConfig)
 	if err != nil {
@@ -109,9 +115,9 @@ func BuildPayloadToKeyboards(cfg ApplicationConfig) {
 
 func BuildKeyboardToDevices(cfg *ApplicationConfig) {
 	for name, kb := range cfg.Keyboards {
-		device, err := FindRawHIDDevice(kb)
+		device, err := CreateRawHIDDevice(kb)
 		if err != nil {
-			fmt.Printf("Unable to find Raw HID device for keyboard %s\n", name)
+			log.Printf("Unable to find Raw HID device for keyboard %s\n", name)
 			continue
 		}
 		kb.HIDDevice = device

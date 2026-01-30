@@ -6,8 +6,7 @@ import (
 	"github.com/sstallion/go-hid"
 )
 
-// FindRawHIDDevice finds and opens the first matching RAW HID interface
-func FindRawHIDDevice(cfg KeyboardConfig) (*hid.Device, error) {
+func CreateRawHIDDevice(cfg KeyboardConfig) (*hid.Device, error) {
 	var devicePath string
 
 	err := hid.Enumerate(cfg.VendorID.GetUint16(), cfg.ProductID.GetUint16(),
@@ -32,7 +31,6 @@ func FindRawHIDDevice(cfg KeyboardConfig) (*hid.Device, error) {
 	return hid.OpenPath(devicePath)
 }
 
-// SendRawReport sends a RAW HID report using the provided config
 func SendRawReport(dev *hid.Device, cfg KeyboardConfig, payload []byte) error {
 	report := make([]byte, cfg.ReportLength+1) // Report ID + payload
 	copy(report[1:], payload)
