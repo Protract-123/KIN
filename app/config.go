@@ -36,9 +36,9 @@ var DefaultConfig = ApplicationConfig{
 }
 
 var ActiveConfig = ApplicationConfig{}
-var PayloadToKeyboards = map[string][]string{}
+var PayloadToKeyboardNames = map[string][]string{}
 
-func InitializeConfig() error {
+func InitializeConfigFile() error {
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func LoadConfig() error {
 	return nil
 }
 
-func BuildPayloadToKeyboards(cfg ApplicationConfig) {
+func InitializePayloadToKeyboardNames(cfg ApplicationConfig) {
 	result := make(map[string][]string)
 
 	for name, kb := range cfg.Keyboards {
@@ -110,14 +110,14 @@ func BuildPayloadToKeyboards(cfg ApplicationConfig) {
 		}
 	}
 
-	PayloadToKeyboards = result
+	PayloadToKeyboardNames = result
 }
 
-func BuildKeyboardToDevices(cfg *ApplicationConfig) {
+func InitializeHIDDevices(cfg *ApplicationConfig) {
 	for name, kb := range cfg.Keyboards {
-		device, err := CreateRawHIDDevice(kb)
+		device, err := CreateHIDDevice(kb)
 		if err != nil {
-			log.Printf("Unable to find Raw HID device for keyboard %s\n", name)
+			log.Printf("Unable to find HID device for keyboard %s\n", name)
 			continue
 		}
 		kb.HIDDevice = device

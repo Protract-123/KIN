@@ -8,8 +8,6 @@ const (
 	PayloadVolume
 )
 
-// BuildPayload creates a payload based on the payload type, the data and the
-// max payload size which can be sent
 func BuildPayload(payloadType PayloadType, data []byte, payloadSize int) []byte {
 	payload := make([]byte, payloadSize)
 	payload[0] = byte(payloadType)
@@ -23,7 +21,6 @@ func BuildPayload(payloadType PayloadType, data []byte, payloadSize int) []byte 
 	return payload
 }
 
-// PrepareCString converts a string into a null-terminated CString
 func PrepareCString(s string, maxLen int) []byte {
 	data := []byte(s + "\x00")
 

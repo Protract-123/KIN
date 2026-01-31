@@ -28,7 +28,7 @@ func main() {
 	configWindow := ui.NewConfigWindow()
 	ui.CreateTray(configWindow)
 
-	err := app.InitializeConfig()
+	err := app.InitializeConfigFile()
 	if err != nil {
 		log.Printf("Unable to initialize config: %v", err)
 		shutdown()
@@ -40,8 +40,8 @@ func main() {
 		shutdown()
 	}
 
-	app.BuildPayloadToKeyboards(app.ActiveConfig)
-	app.BuildKeyboardToDevices(&app.ActiveConfig)
+	app.InitializePayloadToKeyboardNames(app.ActiveConfig)
+	app.InitializeHIDDevices(&app.ActiveConfig)
 
 	for _, function := range InfoFunctions {
 		go func() {

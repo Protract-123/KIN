@@ -2,7 +2,6 @@
 
 package volume
 
-import "C"
 import (
 	"bytes"
 	"context"
