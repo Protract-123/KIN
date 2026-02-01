@@ -117,7 +117,7 @@ func InitializeHIDDevices(cfg *ApplicationConfig) {
 	for name, kb := range cfg.Keyboards {
 		device, err := CreateHIDDevice(kb)
 		if err != nil {
-			log.Printf("Unable to find HID device for keyboard %s\n", name)
+			log.Printf("Unable to find HID device for keyboard %s\n: %v", name, err)
 			continue
 		}
 		kb.HIDDevice = device

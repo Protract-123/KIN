@@ -5,11 +5,12 @@ package volume
 import (
 	"bytes"
 	"context"
+	"log"
 	"os/exec"
 	"strings"
 )
 
-func FetchVolume() (string, error) {
+func FetchVolume() string {
 	cmd := exec.CommandContext(
 		context.Background(),
 		"osascript",
@@ -20,7 +21,8 @@ func FetchVolume() (string, error) {
 	cmd.Stdout = &out
 
 	if err := cmd.Run(); err != nil {
-		return "", err
+		log.Printf("Unable to fetch volume: %v", err)
+		return ""
 	}
 
 	v := strings.TrimSpace(out.String())

@@ -14,7 +14,7 @@ func SendVolumeData() {
 		return
 	}
 
-	volume, _ := FetchVolume()
+	volume := FetchVolume()
 
 	if volume != "" {
 		keyboardNames := app.PayloadToKeyboardNames[payloadKey]
