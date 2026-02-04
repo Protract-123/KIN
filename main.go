@@ -3,14 +3,14 @@ package main
 import (
 	"KIN/active_window"
 	"KIN/app"
-	"KIN/ui"
 	"KIN/volume"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/mappu/miqt/qt6"
+	"fyne.io/systray"
+	"fyne.io/systray/example/icon"
 	"github.com/sstallion/go-hid"
 )
 
@@ -23,10 +23,6 @@ func main() {
 	if err := hid.Init(); err != nil {
 		log.Fatalf("HID init failed: %v", err)
 	}
-
-	qt6.NewQApplication(os.Args)
-	configWindow := ui.NewConfigWindow()
-	ui.CreateTray(configWindow)
 
 	err := app.InitializeConfigFile()
 	if err != nil {
@@ -55,12 +51,24 @@ func main() {
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigCh
-		qt6.QCoreApplication_Exit()
+		systray.Quit()
 	}()
 
-	qt6.QApplication_Exec()
-
+	systray.Run(CreateTray, func() {})
 	shutdown()
+}
+
+func CreateTray() {
+	systray.SetIcon(icon.Data)
+	systray.SetTitle("KIN")
+	systray.SetTooltip("Keyboard Information Negotiator")
+
+	mQuit := systray.AddMenuItem("Quit", "Close KIN")
+	mQuit.SetIcon(icon.Data)
+	go func() {
+		<-mQuit.ClickedCh
+		systray.Quit()
+	}()
 }
 
 func shutdown() {
