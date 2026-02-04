@@ -3,7 +3,9 @@ package active_window
 import (
 	"KIN/app"
 	"log"
+	"strings"
 	"time"
+	"unicode"
 )
 
 const payloadKey = "active_window"
@@ -36,4 +38,36 @@ func SendActiveWindowData() {
 	}
 
 	time.Sleep(time.Duration(payloadInfo.RefreshRate) * time.Millisecond)
+}
+
+func formatAppString(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.TrimSuffix(strings.ToLower(s), ".exe")
+
+	// Replace common separators with spaces
+	replacer := strings.NewReplacer(
+		"-", " ",
+		"_", " ",
+	)
+	s = replacer.Replace(s)
+
+	// Split on whitespace
+	words := strings.Fields(s)
+
+	// Capitalize each word
+	for i, w := range words {
+		runes := []rune(w)
+		if len(runes) == 0 {
+			continue
+		}
+
+		runes[0] = unicode.ToUpper(runes[0])
+		for j := 1; j < len(runes); j++ {
+			runes[j] = unicode.ToLower(runes[j])
+		}
+
+		words[i] = string(runes)
+	}
+
+	return strings.Join(words, " ")
 }

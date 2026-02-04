@@ -5,12 +5,10 @@ package active_window
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"log"
 	"os/exec"
 	"regexp"
 	"strings"
-	"unicode"
 )
 
 var activeWindowFetchers = []func() (string, error){
@@ -50,37 +48,8 @@ func fetchActiveWindowHyprCtl() (string, error) {
 	regex := regexp.MustCompile(`(?m)^\s*class:\s*(.+)$`)
 	match := regex.FindStringSubmatch(out.String())
 	if len(match) < 2 {
-		return "", fmt.Errorf("class not found")
+		return "", log.Println("class not found")
 	}
 
-	return formatActiveString(strings.TrimSpace(match[1])), nil
-}
-
-func formatActiveString(s string) string {
-	// Replace common separators with spaces
-	replacer := strings.NewReplacer(
-		"-", " ",
-		"_", " ",
-	)
-	s = replacer.Replace(s)
-
-	// Split on whitespace
-	words := strings.Fields(s)
-
-	// Capitalize each word
-	for i, w := range words {
-		runes := []rune(w)
-		if len(runes) == 0 {
-			continue
-		}
-
-		runes[0] = unicode.ToUpper(runes[0])
-		for j := 1; j < len(runes); j++ {
-			runes[j] = unicode.ToLower(runes[j])
-		}
-
-		words[i] = string(runes)
-	}
-
-	return strings.Join(words, " ")
+	return formatAppString(strings.TrimSpace(match[1])), nil
 }
