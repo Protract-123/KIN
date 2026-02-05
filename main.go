@@ -1,9 +1,9 @@
 package main
 
 import (
-	"KIN/active_window"
 	"KIN/app"
-	"KIN/volume"
+	"KIN/info/active_window"
+	"KIN/info/volume"
 	"log"
 	"os"
 	"os/signal"
