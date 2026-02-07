@@ -5,50 +5,70 @@ package active_window
 import (
 	"log"
 	"strings"
-	"unsafe"
+	"sync"
 
+	"github.com/ebitengine/purego"
 	"golang.org/x/sys/windows"
 )
 
-var (
-	user32                     = windows.NewLazySystemDLL("user32.dll")
-	psapi                      = windows.NewLazySystemDLL("psapi.dll")
-	procGetForegroundWindow    = user32.NewProc("GetForegroundWindow")
-	procGetWindowThreadProcess = user32.NewProc("GetWindowThreadProcessId")
-	procGetModuleBaseNameW     = psapi.NewProc("GetModuleBaseNameW")
-)
+var user32 = windows.NewLazySystemDLL("user32.dll").Handle()
+var psapi = windows.NewLazySystemDLL("psapi.dll").Handle()
+
+var getForegroundWindow func() uintptr = nil
+var getWindowThreadProcessId func(uintptr, *uint32) uint32 = nil
+var getModuleBaseNameW func(uintptr, uintptr, *uint16, uint32) uint32 = nil
+
+var initOnce sync.Once
+
+func initFunctions() {
+	purego.RegisterLibFunc(&getForegroundWindow, user32, "GetForegroundWindow")
+	purego.RegisterLibFunc(&getWindowThreadProcessId, user32, "GetWindowThreadProcessId")
+	purego.RegisterLibFunc(&getModuleBaseNameW, psapi, "GetModuleBaseNameW")
+}
 
 func FetchActiveWindowName() string {
-	hwnd, _, _ := procGetForegroundWindow.Call()
-	if hwnd == 0 {
+	initOnce.Do(initFunctions)
+	if getForegroundWindow == nil || getWindowThreadProcessId == nil || getModuleBaseNameW == nil {
 		return ""
 	}
 
-	var pid uint32
-	procGetWindowThreadProcess.Call(
-		hwnd,
-		uintptr(unsafe.Pointer(&pid)),
-	)
+	foregroundWindowHandle := getForegroundWindow()
+	if foregroundWindowHandle == 0 {
+		return ""
+	}
 
-	hProcess, err := windows.OpenProcess(
+	var processId uint32
+	threadId := getWindowThreadProcessId(
+		foregroundWindowHandle,
+		&processId,
+	)
+	if threadId == 0 || processId == 0 {
+		return ""
+	}
+
+	processHandle, err := windows.OpenProcess(
 		windows.PROCESS_QUERY_INFORMATION|windows.PROCESS_VM_READ,
 		false,
-		pid,
+		processId,
 	)
 	if err != nil {
 		log.Println("OpenProcess error:", err)
 		return ""
 	}
-	defer windows.CloseHandle(hProcess)
+	defer windows.CloseHandle(processHandle)
 
 	exe := make([]uint16, windows.MAX_PATH)
-	procGetModuleBaseNameW.Call(
-		uintptr(hProcess),
+	stringLength := getModuleBaseNameW(
+		uintptr(processHandle),
 		0,
-		uintptr(unsafe.Pointer(&exe[0])),
-		uintptr(len(exe)),
+		&exe[0],
+		uint32(len(exe)),
 	)
-	processName := windows.UTF16ToString(exe)
+	if stringLength == 0 {
+		return ""
+	}
+
+	processName := windows.UTF16ToString(exe[:stringLength])
 
 	return stripBitnessSuffix(formatAppString(processName))
 }

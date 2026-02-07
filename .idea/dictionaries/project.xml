@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>linux</w>
+      <w>psapi</w>
     </words>
   </dictionary>
 </component>
