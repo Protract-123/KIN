@@ -2,7 +2,7 @@ package main
 
 import (
 	"KIN/app"
-	"KIN/info/active_window"
+	"KIN/info/activeapp"
 	"KIN/info/volume"
 	"log"
 	"os"
@@ -16,7 +16,7 @@ import (
 
 var InfoFunctions = []func(){
 	volume.SendVolumeData,
-	active_window.SendActiveWindowData,
+	activeapp.SendActiveWindowData,
 }
 
 func main() {
@@ -36,8 +36,8 @@ func main() {
 		shutdown()
 	}
 
-	app.InitializePayloadToKeyboardNames(app.ActiveConfig)
-	app.InitializeHIDDevices(&app.ActiveConfig)
+	app.InitializePayloadToDeviceNames()
+	app.InitializeHIDDevices()
 
 	for _, function := range InfoFunctions {
 		go func() {
@@ -54,13 +54,12 @@ func main() {
 		systray.Quit()
 	}()
 
-	systray.Run(CreateTray, func() {})
+	systray.Run(createTray, func() {})
 	shutdown()
 }
 
-func CreateTray() {
+func createTray() {
 	systray.SetIcon(icon.Data)
-	systray.SetTitle("KIN")
 	systray.SetTooltip("Keyboard Information Negotiator")
 
 	mQuit := systray.AddMenuItem("Quit", "Close KIN")
@@ -72,14 +71,14 @@ func CreateTray() {
 }
 
 func shutdown() {
-	for name := range app.ActiveConfig.Keyboards {
-		if app.ActiveConfig.Keyboards[name].HIDDevice == nil {
+	for name := range app.ActiveConfig.Devices {
+		if app.ActiveConfig.Devices[name].HIDDevice == nil {
 			continue
 		}
 
-		err := app.ActiveConfig.Keyboards[name].HIDDevice.Close()
+		err := app.ActiveConfig.Devices[name].HIDDevice.Close()
 		if err != nil {
-			log.Printf("Failed to close keyboard %s: %v", name, err)
+			log.Printf("Failed to close device %s: %v", name, err)
 		}
 	}
 

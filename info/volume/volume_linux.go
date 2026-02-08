@@ -17,7 +17,7 @@ var volumeFetchers = []func() (string, error){
 	getPulseAudioVolume,
 }
 
-func FetchVolume() string {
+func fetchVolume() string {
 	var volume string
 
 	for _, volumeFetcher := range volumeFetchers {

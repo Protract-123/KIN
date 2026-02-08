@@ -8,32 +8,38 @@ import (
 	"github.com/sstallion/go-hid"
 )
 
+// PayloadType - A unique 8-bit integer which represents a type of payload
+type PayloadType uint8
+
+const (
+	PayloadUnknown PayloadType = iota
+	PayloadActiveApp
+	PayloadVolume
+)
+
 type PayloadConfig struct {
-	RefreshRate int  `toml:"refresh_rate"`
-	Active      bool `toml:"active"`
+	RefreshRate int  `toml:"refresh_rate"` // RefreshRate - How often data is refreshed in milliseconds
+	Active      bool `toml:"active"`       // Active - Whether the payload type is activated
 }
 
-type KeyboardConfig struct {
+type DeviceConfig struct {
 	VendorID     HexUint16 `toml:"vendor_id"`
 	ProductID    HexUint16 `toml:"product_id"`
 	UsagePage    HexUint16 `toml:"usage_page"`
 	Usage        HexUint16 `toml:"usage"`
 	ReportLength int       `toml:"report_length"`
 
-	ActivePayloads []string    `toml:"active_payloads"`
+	ActivePayloads []string    `toml:"active_payloads"` // ActivePayloads - List of payload IDs
 	HIDDevice      *hid.Device `toml:"-"`
 }
 
 type ApplicationConfig struct {
-	Keyboards map[string]KeyboardConfig `toml:"keyboards"`
-	Payloads  map[string]PayloadConfig  `toml:"payloads"`
+	Devices  map[string]DeviceConfig  `toml:"devices"`
+	Payloads map[string]PayloadConfig `toml:"payloads"`
 }
 
+// HexUint16 - A uint16 which is converted to hexadecimal when marshaled
 type HexUint16 uint16
-
-func (u HexUint16) GetUint16() uint16 {
-	return uint16(u)
-}
 
 func (h *HexUint16) UnmarshalText(text []byte) error {
 	s := strings.TrimSpace(string(text))
@@ -55,4 +61,7 @@ func (h *HexUint16) UnmarshalText(text []byte) error {
 
 func (h HexUint16) MarshalText() ([]byte, error) {
 	return []byte(fmt.Sprintf("0x%X", uint16(h))), nil
+}
+func (h HexUint16) GetUint16() uint16 {
+	return uint16(h)
 }

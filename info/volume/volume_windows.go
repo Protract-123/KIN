@@ -14,25 +14,25 @@ import (
 
 var ole32 = windows.NewLazySystemDLL("ole32.dll").Handle()
 
-var coCreateInstance func(*windows.GUID, uintptr, uint32, *windows.GUID, *unsafe.Pointer) uintptr = nil
-var coInitialize func(uintptr) uintptr = nil
-var coUninitialize func() = nil
+var _CoCreateInstance func(*windows.GUID, uintptr, uint32, *windows.GUID, *unsafe.Pointer) uintptr = nil
+var _CoInitialize func(uintptr) uintptr = nil
+var _CoUninitialize func() = nil
 
 var initOnce sync.Once
 
 func initFunctions() {
-	purego.RegisterLibFunc(&coCreateInstance, ole32, "CoCreateInstance")
-	purego.RegisterLibFunc(&coInitialize, ole32, "CoInitialize")
-	purego.RegisterLibFunc(&coUninitialize, ole32, "CoUninitialize")
+	purego.RegisterLibFunc(&_CoCreateInstance, ole32, "CoCreateInstance")
+	purego.RegisterLibFunc(&_CoInitialize, ole32, "CoInitialize")
+	purego.RegisterLibFunc(&_CoUninitialize, ole32, "CoUninitialize")
 }
 
-func FetchVolume() string {
+func fetchVolume() string {
 	initOnce.Do(initFunctions)
 
 	var (
-		deviceEnumerator *IMMDeviceEnumerator
-		defaultDevice    *IMMDevice
-		endpointVolume   *IAudioEndpointVolume
+		deviceEnumerator *_IMMDeviceEnumerator
+		defaultDevice    *_IMMDevice
+		endpointVolume   *_IAudioEndpointVolume
 		currentVolume    float32
 	)
 
@@ -50,17 +50,17 @@ func FetchVolume() string {
 				uintptr(unsafe.Pointer(deviceEnumerator)))
 		}
 
-		coUninitialize()
+		_CoUninitialize()
 		return strconv.Itoa(int(currentVolume * 100))
 	}
 
-	coInitialize(0)
+	_CoInitialize(0)
 
-	result := coCreateInstance(
-		&CLSID_MMDeviceEnumerator,
+	result := _CoCreateInstance(
+		&_CLSID_MMDeviceEnumerator,
 		0,
 		windows.CLSCTX_INPROC_SERVER,
-		&IID_IMMDeviceEnumerator,
+		&_IID_IMMDeviceEnumerator,
 		(*unsafe.Pointer)(unsafe.Pointer(&deviceEnumerator)),
 	)
 	if int32(result) < 0 {
@@ -81,7 +81,7 @@ func FetchVolume() string {
 	result, _, _ = purego.SyscallN(
 		defaultDevice.lpVtbl.Activate,
 		uintptr(unsafe.Pointer(defaultDevice)),
-		uintptr(unsafe.Pointer(&IID_IAudioEndpointVolume)),
+		uintptr(unsafe.Pointer(&_IID_IAudioEndpointVolume)),
 		uintptr(windows.CLSCTX_INPROC_SERVER),
 		0,
 		uintptr(unsafe.Pointer(&endpointVolume)),
@@ -101,34 +101,34 @@ func FetchVolume() string {
 
 /*
  The following structs/GUIDS were created based on endpointvolume.h
-	CLSID_MMDeviceEnumerator GUID
-	IID_IMMDeviceEnumerator  GUID
-	IMMDeviceEnumerator      struct
-	IMMDeviceEnumeratorVtbl  struct
-	IMMDevice                struct
-	IMMDeviceVtbl            struct
+	_CLSID_MMDeviceEnumerator GUID
+	_IID_IMMDeviceEnumerator  GUID
+	_IMMDeviceEnumerator      struct
+	_IMMDeviceEnumeratorVtbl  struct
+	_IMMDevice                struct
+	_IMMDeviceVtbl            struct
 
 */
 
-var CLSID_MMDeviceEnumerator = windows.GUID{
+var _CLSID_MMDeviceEnumerator = windows.GUID{
 	0xBCDE0395,
 	0xE52F,
 	0x467C,
 	[8]byte{0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E},
 }
 
-var IID_IMMDeviceEnumerator = windows.GUID{
+var _IID_IMMDeviceEnumerator = windows.GUID{
 	0xA95664D2,
 	0x9614,
 	0x4F35,
 	[8]byte{0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36, 0x17, 0xE6},
 }
 
-type IMMDeviceEnumerator struct {
-	lpVtbl *IMMDeviceEnumeratorVtbl
+type _IMMDeviceEnumerator struct {
+	lpVtbl *_IMMDeviceEnumeratorVtbl
 }
 
-type IMMDeviceEnumeratorVtbl struct {
+type _IMMDeviceEnumeratorVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
 	Release        uintptr
@@ -140,11 +140,11 @@ type IMMDeviceEnumeratorVtbl struct {
 	UnregisterEndpointNotificationCallback uintptr
 }
 
-type IMMDevice struct {
-	lpVtbl *IMMDeviceVtbl
+type _IMMDevice struct {
+	lpVtbl *_IMMDeviceVtbl
 }
 
-type IMMDeviceVtbl struct {
+type _IMMDeviceVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
 	Release        uintptr
@@ -157,23 +157,23 @@ type IMMDeviceVtbl struct {
 
 /*
  The following structs/GUIDS were created based on endpointvolume.h
-	IID_IAudioEndpointVolume GUID
-	IAudioEndpointVolume     struct
-	IAudioEndpointVolumeVtbl struct
+	_IID_IAudioEndpointVolume GUID
+	_IAudioEndpointVolume     struct
+	_IAudioEndpointVolumeVtbl struct
 */
 
-var IID_IAudioEndpointVolume = windows.GUID{
+var _IID_IAudioEndpointVolume = windows.GUID{
 	0x5CDF2C82,
 	0x841E,
 	0x4546,
 	[8]byte{0x97, 0x22, 0x0C, 0xF7, 0x40, 0x78, 0x22, 0x9A},
 }
 
-type IAudioEndpointVolume struct {
-	lpVtbl *IAudioEndpointVolumeVtbl
+type _IAudioEndpointVolume struct {
+	lpVtbl *_IAudioEndpointVolumeVtbl
 }
 
-type IAudioEndpointVolumeVtbl struct {
+type _IAudioEndpointVolumeVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
 	Release        uintptr

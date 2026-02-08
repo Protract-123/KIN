@@ -1,6 +1,6 @@
 //go:build windows
 
-package active_window
+package activeapp
 
 import (
 	"log"
@@ -14,31 +14,31 @@ import (
 var user32 = windows.NewLazySystemDLL("user32.dll").Handle()
 var psapi = windows.NewLazySystemDLL("psapi.dll").Handle()
 
-var getForegroundWindow func() uintptr = nil
-var getWindowThreadProcessId func(uintptr, *uint32) uint32 = nil
-var getModuleBaseNameW func(uintptr, uintptr, *uint16, uint32) uint32 = nil
+var _GetForegroundWindow func() uintptr = nil
+var _GetWindowThreadProcessId func(uintptr, *uint32) uint32 = nil
+var _GetModuleBaseNameW func(uintptr, uintptr, *uint16, uint32) uint32 = nil
 
 var initOnce sync.Once
 
 func initFunctions() {
-	purego.RegisterLibFunc(&getForegroundWindow, user32, "GetForegroundWindow")
-	purego.RegisterLibFunc(&getWindowThreadProcessId, user32, "GetWindowThreadProcessId")
-	purego.RegisterLibFunc(&getModuleBaseNameW, psapi, "GetModuleBaseNameW")
+	purego.RegisterLibFunc(&_GetForegroundWindow, user32, "GetForegroundWindow")
+	purego.RegisterLibFunc(&_GetWindowThreadProcessId, user32, "GetWindowThreadProcessId")
+	purego.RegisterLibFunc(&_GetModuleBaseNameW, psapi, "GetModuleBaseNameW")
 }
 
-func FetchActiveWindowName() string {
+func fetchActiveAppName() string {
 	initOnce.Do(initFunctions)
-	if getForegroundWindow == nil || getWindowThreadProcessId == nil || getModuleBaseNameW == nil {
+	if _GetForegroundWindow == nil || _GetWindowThreadProcessId == nil || _GetModuleBaseNameW == nil {
 		return ""
 	}
 
-	foregroundWindowHandle := getForegroundWindow()
+	foregroundWindowHandle := _GetForegroundWindow()
 	if foregroundWindowHandle == 0 {
 		return ""
 	}
 
 	var processId uint32
-	threadId := getWindowThreadProcessId(
+	threadId := _GetWindowThreadProcessId(
 		foregroundWindowHandle,
 		&processId,
 	)
@@ -58,7 +58,7 @@ func FetchActiveWindowName() string {
 	defer windows.CloseHandle(processHandle)
 
 	exe := make([]uint16, windows.MAX_PATH)
-	stringLength := getModuleBaseNameW(
+	stringLength := _GetModuleBaseNameW(
 		uintptr(processHandle),
 		0,
 		&exe[0],

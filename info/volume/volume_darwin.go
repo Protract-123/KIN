@@ -4,6 +4,7 @@ package volume
 
 import (
 	"log"
+	"math"
 	"strconv"
 	"sync"
 	"unsafe"
@@ -11,8 +12,8 @@ import (
 	"github.com/ebitengine/purego"
 )
 
-var audioObjectGetPropertyData func(uint32, *AudioObjectPropertyAddress, uint32, unsafe.Pointer, *uint32, unsafe.Pointer) int32 = nil
-var audioObjectHasPropertyData func(uint32, *AudioObjectPropertyAddress) bool = nil
+var _AudioObjectGetPropertyData func(uint32, *_AudioObjectPropertyAddress, uint32, unsafe.Pointer, *uint32, unsafe.Pointer) int32 = nil
+var _AudioObjectHasPropertyData func(uint32, *_AudioObjectPropertyAddress) bool = nil
 
 var initOnce sync.Once
 
@@ -26,25 +27,24 @@ func initFunctions() {
 		log.Fatalf("Unable to load core audio: %v", err)
 	}
 
-	purego.RegisterLibFunc(&audioObjectGetPropertyData, coreAudio, "AudioObjectGetPropertyData")
-	purego.RegisterLibFunc(&audioObjectHasPropertyData, coreAudio, "AudioObjectHasProperty")
-	purego.RegisterLibFunc(&audioObjectGetPropertyData, coreAudio, "AudioObjectGetPropertyData")
+	purego.RegisterLibFunc(&_AudioObjectGetPropertyData, coreAudio, "AudioObjectGetPropertyData")
+	purego.RegisterLibFunc(&_AudioObjectHasPropertyData, coreAudio, "AudioObjectHasProperty")
 }
 
-func FetchVolume() string {
+func fetchVolume() string {
 	initOnce.Do(initFunctions)
 
 	var deviceID uint32
 	dataSize := uint32(unsafe.Sizeof(deviceID))
 
-	getOutputDeviceAddress := AudioObjectPropertyAddress{
-		Selector: kAudioHardwarePropertyDefaultOutputDevice,
-		Scope:    kAudioObjectPropertyScopeGlobal,
-		Element:  kAudioObjectPropertyElementMain,
+	getOutputDeviceAddress := _AudioObjectPropertyAddress{
+		Selector: _kAudioHardwarePropertyDefaultOutputDevice,
+		Scope:    _kAudioObjectPropertyScopeGlobal,
+		Element:  _kAudioObjectPropertyElementMain,
 	}
 
-	status := audioObjectGetPropertyData(
-		kAudioObjectSystemObject,
+	status := _AudioObjectGetPropertyData(
+		_kAudioObjectSystemObject,
 		&getOutputDeviceAddress,
 		0,
 		nil,
@@ -52,24 +52,24 @@ func FetchVolume() string {
 		unsafe.Pointer(&deviceID),
 	)
 
-	if status != kAudioHardwareNoError {
+	if status != _kAudioHardwareNoError {
 		return ""
 	}
 
-	getVolumeAddress := AudioObjectPropertyAddress{
-		Selector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
-		Scope:    kAudioObjectPropertyScopeOutput,
-		Element:  kAudioObjectPropertyElementMain,
+	getVolumeAddress := _AudioObjectPropertyAddress{
+		Selector: _kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+		Scope:    _kAudioObjectPropertyScopeOutput,
+		Element:  _kAudioObjectPropertyElementMain,
 	}
 
-	if !audioObjectHasPropertyData(deviceID, &getVolumeAddress) {
+	if !_AudioObjectHasPropertyData(deviceID, &getVolumeAddress) {
 		return ""
 	}
 
 	var volume float32
 	dataSize = uint32(unsafe.Sizeof(volume))
 
-	status = audioObjectGetPropertyData(
+	status = _AudioObjectGetPropertyData(
 		deviceID,
 		&getVolumeAddress,
 		0,
@@ -78,46 +78,46 @@ func FetchVolume() string {
 		unsafe.Pointer(&volume),
 	)
 
-	if status != kAudioHardwareNoError {
+	if status != _kAudioHardwareNoError {
 		return ""
 	}
 
-	return strconv.Itoa(int(volume * 100))
+	return strconv.Itoa(int(math.Round(float64(volume * 100))))
 }
 
 /*
- The following structs/consts were found in AudioHardwareBase.h
-	AudioObjectPropertyAddress      struct
+ The following structs/consts were created based on AudioHardwareBase.h
+	_AudioObjectPropertyAddress      struct
 
-	kAudioObjectPropertyScopeGlobal const
-	kAudioObjectPropertyScopeOutput const
-	kAudioObjectPropertyElementMain const
-	kAudioHardwareNoError           const
+	_kAudioObjectPropertyScopeGlobal const
+	_kAudioObjectPropertyScopeOutput const
+	_kAudioObjectPropertyElementMain const
+	_kAudioHardwareNoError           const
 */
 
-type AudioObjectPropertyAddress struct {
+type _AudioObjectPropertyAddress struct {
 	Selector uint32
 	Scope    uint32
 	Element  uint32
 }
 
-const kAudioObjectPropertyScopeGlobal uint32 = 0x676C6F62 // 'glob'
-const kAudioObjectPropertyScopeOutput uint32 = 0x6F757470 // 'outp'
-const kAudioObjectPropertyElementMain uint32 = 0
-const kAudioHardwareNoError int32 = 0
+const _kAudioObjectPropertyScopeGlobal uint32 = 0x676C6F62 // 'glob'
+const _kAudioObjectPropertyScopeOutput uint32 = 0x6F757470 // 'outp'
+const _kAudioObjectPropertyElementMain uint32 = 0
+const _kAudioHardwareNoError int32 = 0
 
 /*
- The following constants were found in AudioHardware.h
-	kAudioObjectSystemObject                  const
-	kAudioHardwarePropertyDefaultOutputDevice const
+ The following constants were created based on AudioHardware.h
+	_kAudioObjectSystemObject                  const
+	_kAudioHardwarePropertyDefaultOutputDevice const
 */
 
-const kAudioObjectSystemObject uint32 = 1
-const kAudioHardwarePropertyDefaultOutputDevice uint32 = 0x644F7574
+const _kAudioObjectSystemObject uint32 = 1
+const _kAudioHardwarePropertyDefaultOutputDevice uint32 = 0x644F7574
 
 /*
- The following constants were found in AudioHardwareService.h
-	kAudioHardwareServiceDeviceProperty_VirtualMainVolume const
+ The following constants were created based on AudioHardwareService.h
+	_kAudioHardwareServiceDeviceProperty_VirtualMainVolume const
 */
 
-const kAudioHardwareServiceDeviceProperty_VirtualMainVolume uint32 = 0x766D7663
+const _kAudioHardwareServiceDeviceProperty_VirtualMainVolume uint32 = 0x766D7663

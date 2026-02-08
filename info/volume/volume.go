@@ -14,23 +14,22 @@ func SendVolumeData() {
 		return
 	}
 
-	volume := FetchVolume()
+	volume := fetchVolume()
 
 	if volume != "" {
-		keyboardNames := app.PayloadToKeyboardNames[payloadKey]
+		deviceNames := app.PayloadToDeviceNames[payloadKey]
 
-		for _, name := range keyboardNames {
-			keyboard := app.ActiveConfig.Keyboards[name]
+		for _, name := range deviceNames {
+			device := app.ActiveConfig.Devices[name]
 
-			if keyboard.HIDDevice == nil {
+			if device.HIDDevice == nil {
 				continue
 			}
 
-			data := app.PrepareCString(volume, keyboard.ReportLength-1) // First byte reserved for Payload Type
-			payload := app.BuildPayload(app.PayloadVolume, data, keyboard.ReportLength)
+			data := app.StringToCString(volume, device.ReportLength-1) // First byte reserved for Payload Type
 
-			if err := app.SendHIDReport(keyboard.HIDDevice, keyboard, payload); err != nil {
-				log.Printf("Write to keyboard %s failed: %v", name, err)
+			if err := app.SendPayload(device.HIDDevice, app.PayloadVolume, data, device.ReportLength); err != nil {
+				log.Printf("Write to device %s failed: %v", name, err)
 			}
 		}
 	}

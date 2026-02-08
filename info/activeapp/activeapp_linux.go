@@ -1,6 +1,6 @@
 //go:build linux
 
-package active_window
+package activeapp
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ var activeWindowFetchers = []func() (string, error){
 	fetchActiveWindowHyprCtl,
 }
 
-func FetchActiveWindowName() string {
+func fetchActiveAppName() string {
 	var activeWindow string
 
 	for _, activeWindowFetcher := range activeWindowFetchers {

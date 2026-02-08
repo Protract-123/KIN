@@ -8,23 +8,25 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-var ApplicationName = "KIN"
+// ConfigDirectory - The sub-folder in os.UserConfigDir which stores config.toml
+const ConfigDirectory = "KIN"
 
+// DefaultConfig - The default ApplicationConfig used to generate config.toml if it doesn't exist
 var DefaultConfig = ApplicationConfig{
-	Keyboards: map[string]KeyboardConfig{
+	Devices: map[string]DeviceConfig{
 		"default": {
 			VendorID:       0xFEED,
 			ProductID:      0x4020,
 			UsagePage:      0xFF60,
 			Usage:          0x61,
 			ReportLength:   32,
-			ActivePayloads: []string{"volume", "active_window"},
+			ActivePayloads: []string{"volume", "activeapp"},
 
 			HIDDevice: nil,
 		},
 	},
 	Payloads: map[string]PayloadConfig{
-		"active_window": {
+		"activeapp": {
 			RefreshRate: 1000,
 			Active:      true,
 		},
@@ -35,16 +37,20 @@ var DefaultConfig = ApplicationConfig{
 	},
 }
 
+// ActiveConfig - The loaded ApplicationConfig used by the application
 var ActiveConfig = ApplicationConfig{}
-var PayloadToKeyboardNames = map[string][]string{}
 
+// PayloadToDeviceNames - A map of payload IDs to device names
+var PayloadToDeviceNames = map[string][]string{}
+
+// InitializeConfigFile - Initializes config.toml in os.UserConfigDir / ConfigDirectory if it doesn't exist using DefaultConfig
 func InitializeConfigFile() error {
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return err
 	}
 
-	configDir := filepath.Join(base, ApplicationName)
+	configDir := filepath.Join(base, ConfigDirectory)
 	configPath := filepath.Join(configDir, "config.toml")
 
 	err = os.MkdirAll(configDir, 0700)
@@ -81,13 +87,14 @@ func InitializeConfigFile() error {
 	return nil
 }
 
+// LoadConfig - Initializes ActiveConfig from os.UserConfigDir / ConfigDirectory / config.toml
 func LoadConfig() error {
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return err
 	}
 
-	configPath := filepath.Join(base, ApplicationName, "config.toml")
+	configPath := filepath.Join(base, ConfigDirectory, "config.toml")
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {
@@ -101,26 +108,29 @@ func LoadConfig() error {
 	return nil
 }
 
-func InitializePayloadToKeyboardNames(cfg ApplicationConfig) {
+// InitializePayloadToDeviceNames - Initializes PayloadToDeviceNames using ActiveConfig
+func InitializePayloadToDeviceNames() {
 	result := make(map[string][]string)
 
-	for name, kb := range cfg.Keyboards {
-		for _, payload := range kb.ActivePayloads {
+	for name, device := range ActiveConfig.Devices {
+		for _, payload := range device.ActivePayloads {
 			result[payload] = append(result[payload], name)
 		}
 	}
 
-	PayloadToKeyboardNames = result
+	PayloadToDeviceNames = result
 }
 
-func InitializeHIDDevices(cfg *ApplicationConfig) {
-	for name, kb := range cfg.Keyboards {
-		device, err := CreateHIDDevice(kb)
+// InitializeHIDDevices - Initializes all HID devices in ActiveConfig
+func InitializeHIDDevices() {
+	cfg := &ActiveConfig
+	for name, device := range cfg.Devices {
+		hidDevice, err := CreateHIDDevice(device)
 		if err != nil {
-			log.Printf("Unable to find HID device for keyboard %s\n: %v", name, err)
+			log.Printf("Unable to find HID device for device %s\n: %v", name, err)
 			continue
 		}
-		kb.HIDDevice = device
-		cfg.Keyboards[name] = kb
+		device.HIDDevice = hidDevice
+		cfg.Devices[name] = device
 	}
 }

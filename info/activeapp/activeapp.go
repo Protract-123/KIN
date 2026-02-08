@@ -1,4 +1,4 @@
-package active_window
+package activeapp
 
 import (
 	"KIN/app"
@@ -8,7 +8,7 @@ import (
 	"unicode"
 )
 
-const payloadKey = "active_window"
+const payloadKey = "activeapp"
 
 func SendActiveWindowData() {
 	payloadInfo := app.ActiveConfig.Payloads[payloadKey]
@@ -16,23 +16,22 @@ func SendActiveWindowData() {
 		return
 	}
 
-	window := FetchActiveWindowName()
+	applicationName := fetchActiveAppName()
 
-	if window != "" {
-		keyboardNames := app.PayloadToKeyboardNames[payloadKey]
+	if applicationName != "" {
+		deviceNames := app.PayloadToDeviceNames[payloadKey]
 
-		for _, name := range keyboardNames {
-			keyboard := app.ActiveConfig.Keyboards[name]
+		for _, name := range deviceNames {
+			device := app.ActiveConfig.Devices[name]
 
-			if keyboard.HIDDevice == nil {
+			if device.HIDDevice == nil {
 				continue
 			}
 
-			data := app.PrepareCString(window, keyboard.ReportLength-1) // First byte reserved for Payload Type
-			payload := app.BuildPayload(app.PayloadActiveWindow, data, keyboard.ReportLength)
+			data := app.StringToCString(applicationName, device.ReportLength-1) // First byte reserved for Payload Type
 
-			if err := app.SendHIDReport(keyboard.HIDDevice, keyboard, payload); err != nil {
-				log.Printf("Write to keyboard %s failed: %v", name, err)
+			if err := app.SendPayload(device.HIDDevice, app.PayloadActiveApp, data, device.ReportLength); err != nil {
+				log.Printf("Write to device %s failed: %v", name, err)
 			}
 		}
 	}
