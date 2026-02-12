@@ -1,6 +1,6 @@
 //go:build windows
 
-package activeapp
+package active_app
 
 import (
 	"log"

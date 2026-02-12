@@ -1,4 +1,4 @@
-package activeapp
+package active_app
 
 import (
 	"KIN/app"
@@ -8,7 +8,7 @@ import (
 	"unicode"
 )
 
-const payloadKey = "activeapp"
+const payloadKey = "active_app"
 
 func SendActiveWindowData() {
 	payloadInfo := app.ActiveConfig.Payloads[payloadKey]

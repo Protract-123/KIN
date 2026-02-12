@@ -2,7 +2,7 @@ package main
 
 import (
 	"KIN/app"
-	"KIN/info/activeapp"
+	"KIN/info/active_app"
 	"KIN/info/volume"
 	"log"
 	"os"
@@ -11,19 +11,14 @@ import (
 
 	"fyne.io/systray"
 	"fyne.io/systray/example/icon"
-	"github.com/sstallion/go-hid"
 )
 
 var InfoFunctions = []func(){
 	volume.SendVolumeData,
-	activeapp.SendActiveWindowData,
+	active_app.SendActiveWindowData,
 }
 
 func main() {
-	if err := hid.Init(); err != nil {
-		log.Fatalf("HID init failed: %v", err)
-	}
-
 	err := app.InitializeConfigFile()
 	if err != nil {
 		log.Printf("Unable to initialize config: %v", err)
@@ -54,6 +49,7 @@ func main() {
 		systray.Quit()
 	}()
 
+	log.Printf("Application started")
 	systray.Run(createTray, func() {})
 	shutdown()
 }
@@ -80,11 +76,6 @@ func shutdown() {
 		if err != nil {
 			log.Printf("Failed to close device %s: %v", name, err)
 		}
-	}
-
-	err := hid.Exit()
-	if err != nil {
-		log.Printf("HID exit failed: %v", err)
 	}
 
 	log.Print("Exited gracefully")

@@ -1,10 +1,11 @@
 //go:build linux
 
-package activeapp
+package active_app
 
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log"
 	"os/exec"
 	"regexp"
@@ -48,7 +49,7 @@ func fetchActiveWindowHyprCtl() (string, error) {
 	regex := regexp.MustCompile(`(?m)^\s*class:\s*(.+)$`)
 	match := regex.FindStringSubmatch(out.String())
 	if len(match) < 2 {
-		return "", log.Println("class not found")
+		return "", errors.New("class not found")
 	}
 
 	return formatAppString(strings.TrimSpace(match[1])), nil

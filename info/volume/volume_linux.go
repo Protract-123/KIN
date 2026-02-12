@@ -5,6 +5,7 @@ package volume
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log"
 	"os/exec"
 	"regexp"
@@ -46,15 +47,17 @@ func getWirePlumberVolume() (string, error) {
 		return "", err
 	}
 
-	// Output string is in form "Volume: 0.37"
-	volumeDecimal := strings.TrimSpace(strings.Split(out.String(), " ")[1])
-	volumePercent, err := strconv.ParseFloat(volumeDecimal, 64)
+	fields := strings.Fields(out.String())
+	if len(fields) < 2 {
+		return "", errors.New("unexpected wpctl output")
+	}
 
+	volume, err := strconv.ParseFloat(fields[1], 64)
 	if err != nil {
 		return "", err
 	}
 
-	return strconv.Itoa(int(volumePercent * 100)), nil
+	return strconv.Itoa(int(volume * 100)), nil
 }
 
 func getPulseAudioVolume() (string, error) {
@@ -71,19 +74,18 @@ func getPulseAudioVolume() (string, error) {
 		return "", err
 	}
 
-	// Output string is in form (probably) Volume: front-left: 24248 /  37% / -25.91 dB,   front-right: 24248 /  37% / -25.91 dB
-	regex := regexp.MustCompile("front-left:\\s+\\d+\\s*/\\s*(\\d+)%.*?front-right:\\s+\\d+\\s*/\\s*(\\d+)%")
-	matches := regex.FindStringSubmatch(out.String())
+	re := regexp.MustCompile(`(\d+)%`)
+	matches := re.FindAllStringSubmatch(out.String(), -1)
 
-	volumeLeft, err := strconv.Atoi(matches[1])
-	if err != nil {
-		return "", err
+	if len(matches) == 0 {
+		return "", errors.New("no volume percentages found")
 	}
 
-	volumeRight, err := strconv.Atoi(matches[2])
-	if err != nil {
-		return "", err
+	sum := 0
+	for _, m := range matches {
+		v, _ := strconv.Atoi(m[1])
+		sum += v
 	}
 
-	return strconv.Itoa((volumeLeft + volumeRight) / 2), nil
+	return strconv.Itoa(sum / len(matches)), nil
 }

@@ -20,13 +20,13 @@ var DefaultConfig = ApplicationConfig{
 			UsagePage:      0xFF60,
 			Usage:          0x61,
 			ReportLength:   32,
-			ActivePayloads: []string{"volume", "activeapp"},
+			ActivePayloads: []string{"volume", "active_app"},
 
 			HIDDevice: nil,
 		},
 	},
 	Payloads: map[string]PayloadConfig{
-		"activeapp": {
+		"active_app": {
 			RefreshRate: 1000,
 			Active:      true,
 		},

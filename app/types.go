@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sstallion/go-hid"
+	"rafaelmartins.com/p/usbhid"
 )
 
 // PayloadType - A unique 8-bit integer which represents a type of payload
@@ -29,8 +29,8 @@ type DeviceConfig struct {
 	Usage        HexUint16 `toml:"usage"`
 	ReportLength int       `toml:"report_length"`
 
-	ActivePayloads []string    `toml:"active_payloads"` // ActivePayloads - List of payload IDs
-	HIDDevice      *hid.Device `toml:"-"`
+	ActivePayloads []string       `toml:"active_payloads"` // ActivePayloads - List of payload IDs
+	HIDDevice      *usbhid.Device `toml:"-"`
 }
 
 type ApplicationConfig struct {
@@ -62,6 +62,7 @@ func (h *HexUint16) UnmarshalText(text []byte) error {
 func (h HexUint16) MarshalText() ([]byte, error) {
 	return []byte(fmt.Sprintf("0x%X", uint16(h))), nil
 }
+
 func (h HexUint16) GetUint16() uint16 {
 	return uint16(h)
 }

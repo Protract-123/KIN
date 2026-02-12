@@ -1,6 +1,6 @@
 //go:build darwin
 
-package activeapp
+package active_app
 
 import (
 	"sync"

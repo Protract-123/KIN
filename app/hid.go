@@ -3,54 +3,56 @@ package app
 import (
 	"errors"
 
-	"github.com/sstallion/go-hid"
+	"rafaelmartins.com/p/usbhid"
 )
 
-// CreateHIDDevice - Creates a reference to a hid.Device using a DeviceConfig to find an exact match
-func CreateHIDDevice(cfg DeviceConfig) (*hid.Device, error) {
-	var devicePath string
-
-	err := hid.Enumerate(cfg.VendorID.GetUint16(), cfg.ProductID.GetUint16(),
-		func(info *hid.DeviceInfo) error {
-			if info.UsagePage == cfg.UsagePage.GetUint16() &&
-				info.Usage == cfg.Usage.GetUint16() {
-				devicePath = info.Path
-				// Stop enumeration early
-				return errors.New("device found")
-			}
-			return nil
-		},
-	)
-
-	if devicePath == "" {
-		if err != nil {
-			return nil, err
+// CreateHIDDevice - Creates a reference to a usbhid.Device using a DeviceConfig to find an exact match
+func CreateHIDDevice(cfg DeviceConfig) (*usbhid.Device, error) {
+	deviceFilter := func(device *usbhid.Device) bool {
+		if device.VendorId() != cfg.VendorID.GetUint16() {
+			return false
 		}
-		return nil, errors.New("HID device not found")
+		if device.ProductId() != cfg.ProductID.GetUint16() {
+			return false
+		}
+		if device.Usage() != cfg.Usage.GetUint16() {
+			return false
+		}
+		if device.UsagePage() != cfg.UsagePage.GetUint16() {
+			return false
+		}
+
+		return true
 	}
 
-	return hid.OpenPath(devicePath)
+	device, err := usbhid.Get(deviceFilter, true, false)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return device, nil
 }
 
-// SendPayload - Sends data to a hid.Device given a PayloadType, and the reportLength of the device
-func SendPayload(dev *hid.Device, payloadType PayloadType, data []byte, reportLength int) error {
-	// Report = ReportID (1 byte) + payload
-	report := make([]byte, reportLength+1)
+// SendPayload - Sends data to a usbhid.Device given a PayloadType, and the reportLength of the device
+func SendPayload(dev *usbhid.Device, payloadType PayloadType, data []byte, reportLength int) error {
+	if !dev.IsOpen() {
+		return errors.New("USB device not open")
+	}
 
-	// Payload starts after report ID
-	payload := report[1:]
+	report := make([]byte, reportLength)
 
 	// First byte is payload type
-	payload[0] = byte(payloadType)
+	report[0] = byte(payloadType)
 
 	maxDataLen := reportLength - 1
 	if len(data) > maxDataLen {
 		data = data[:maxDataLen]
 	}
 
-	copy(payload[1:], data)
+	copy(report[1:], data)
 
-	_, err := dev.Write(report)
+	err := dev.SetOutputReport(0x00, report)
 	return err
 }
 
