@@ -6,7 +6,6 @@ import (
 	"rafaelmartins.com/p/usbhid"
 )
 
-// CreateHIDDevice - Creates a reference to a usbhid.Device using a DeviceConfig to find an exact match
 func CreateHIDDevice(cfg DeviceConfig) (*usbhid.Device, error) {
 	deviceFilter := func(device *usbhid.Device) bool {
 		if device.VendorId() != cfg.VendorID.GetUint16() {
@@ -34,7 +33,6 @@ func CreateHIDDevice(cfg DeviceConfig) (*usbhid.Device, error) {
 	return device, nil
 }
 
-// SendPayload - Sends data to a usbhid.Device given a PayloadType, and the reportLength of the device
 func SendPayload(dev *usbhid.Device, payloadType PayloadType, data []byte, reportLength int) error {
 	if !dev.IsOpen() {
 		return errors.New("USB device not open")
@@ -56,7 +54,6 @@ func SendPayload(dev *usbhid.Device, payloadType PayloadType, data []byte, repor
 	return err
 }
 
-// StringToCString - Converts a Go string to a C string which fits in maxLen bytes
 func StringToCString(s string, maxLen int) []byte {
 	data := []byte(s + "\x00")
 

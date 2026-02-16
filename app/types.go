@@ -19,7 +19,7 @@ const (
 
 type PayloadConfig struct {
 	RefreshRate int  `toml:"refresh_rate"` // RefreshRate - How often data is refreshed in milliseconds
-	Active      bool `toml:"active"`       // Active - Whether the payload type is activated
+	Active      bool `toml:"active"`
 }
 
 type DeviceConfig struct {
@@ -29,7 +29,7 @@ type DeviceConfig struct {
 	Usage        HexUint16 `toml:"usage"`
 	ReportLength int       `toml:"report_length"`
 
-	ActivePayloads []string       `toml:"active_payloads"` // ActivePayloads - List of payload IDs
+	ActivePayloads []string       `toml:"active_payloads"`
 	HIDDevice      *usbhid.Device `toml:"-"`
 }
 
@@ -38,7 +38,6 @@ type ApplicationConfig struct {
 	Payloads map[string]PayloadConfig `toml:"payloads"`
 }
 
-// HexUint16 - A uint16 which is converted to hexadecimal when marshaled
 type HexUint16 uint16
 
 func (h *HexUint16) UnmarshalText(text []byte) error {

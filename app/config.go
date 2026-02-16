@@ -8,10 +8,8 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// ConfigDirectory - The sub-folder in os.UserConfigDir which stores config.toml
 const ConfigDirectory = "KIN"
 
-// DefaultConfig - The default ApplicationConfig used to generate config.toml if it doesn't exist
 var DefaultConfig = ApplicationConfig{
 	Devices: map[string]DeviceConfig{
 		"default": {
@@ -37,13 +35,10 @@ var DefaultConfig = ApplicationConfig{
 	},
 }
 
-// ActiveConfig - The loaded ApplicationConfig used by the application
 var ActiveConfig = ApplicationConfig{}
 
-// PayloadToDeviceNames - A map of payload IDs to device names
 var PayloadToDeviceNames = map[string][]string{}
 
-// InitializeConfigFile - Initializes config.toml in os.UserConfigDir / ConfigDirectory if it doesn't exist using DefaultConfig
 func InitializeConfigFile() error {
 	base, err := os.UserConfigDir()
 	if err != nil {
@@ -87,8 +82,7 @@ func InitializeConfigFile() error {
 	return nil
 }
 
-// LoadConfig - Initializes ActiveConfig from os.UserConfigDir / ConfigDirectory / config.toml
-func LoadConfig() error {
+func LoadConfigFromFile() error {
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return err
@@ -108,7 +102,6 @@ func LoadConfig() error {
 	return nil
 }
 
-// InitializePayloadToDeviceNames - Initializes PayloadToDeviceNames using ActiveConfig
 func InitializePayloadToDeviceNames() {
 	result := make(map[string][]string)
 
@@ -121,13 +114,12 @@ func InitializePayloadToDeviceNames() {
 	PayloadToDeviceNames = result
 }
 
-// InitializeHIDDevices - Initializes all HID devices in ActiveConfig
 func InitializeHIDDevices() {
 	cfg := &ActiveConfig
 	for name, device := range cfg.Devices {
 		hidDevice, err := CreateHIDDevice(device)
 		if err != nil {
-			log.Printf("Unable to find HID device for device %s\n: %v", name, err)
+			log.Printf("Unable to find HID device for device %s: %v", name, err)
 			continue
 		}
 		device.HIDDevice = hidDevice

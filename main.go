@@ -25,7 +25,7 @@ func main() {
 		shutdown()
 	}
 
-	err = app.LoadConfig()
+	err = app.LoadConfigFromFile()
 	if err != nil {
 		log.Printf("Unable to load config: %v", err)
 		shutdown()
