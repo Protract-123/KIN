@@ -7,37 +7,74 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"fyne.io/systray"
 	"fyne.io/systray/example/icon"
 )
 
-var InfoFunctions = []func(){
-	volume.SendVolumeData,
-	active_app.SendActiveWindowData,
+type InfoFunction func(config app.PayloadConfig, deviceNameToDevice map[string]*app.DeviceConfig)
+
+var PayloadIDToInfoFunction = map[string]InfoFunction{
+	"volume":     volume.SendVolumeData,
+	"active_app": active_app.SendActiveWindowData,
 }
 
+const ConfigDirectory = "KIN"
+
+var ApplicationConfig = app.ApplicationConfig{}
+
 func main() {
-	err := app.InitializeConfigFile()
+	// Config Initialization
+	base, err := os.UserConfigDir()
+	if err != nil {
+		log.Printf("Unable to get user config directory: %v", err)
+		shutdown()
+	}
+
+	configDir := filepath.Join(base, ConfigDirectory, "config.toml")
+
+	err = app.InitializeConfigFile(configDir)
 	if err != nil {
 		log.Printf("Unable to initialize config: %v", err)
 		shutdown()
 	}
 
-	err = app.LoadConfigFromFile()
+	err = app.LoadConfigFromFile(configDir, &ApplicationConfig)
 	if err != nil {
 		log.Printf("Unable to load config: %v", err)
 		shutdown()
 	}
 
-	app.InitializePayloadToDeviceNames()
-	app.InitializeHIDDevices()
+	// HID Device Initialization
+	for name, device := range ApplicationConfig.Devices {
+		hidDevice, err := app.CreateHIDDevice(device)
 
-	for _, function := range InfoFunctions {
+		if err != nil {
+			log.Printf("Unable to create HID device for %s: %v", name, err)
+			continue
+		}
+
+		device.HIDDevice = hidDevice
+		ApplicationConfig.Devices[name] = device
+	}
+
+	// Info Function Loops
+	for payloadId, infoFunction := range PayloadIDToInfoFunction {
 		go func() {
+			devices := map[string]*app.DeviceConfig{}
+
+			for name, device := range ApplicationConfig.Devices {
+				for _, payload := range device.AuthorizedPayloads {
+					if payloadId == payload {
+						devices[name] = &device
+					}
+				}
+			}
+
 			for {
-				function()
+				infoFunction(ApplicationConfig.Payloads[payloadId], devices)
 			}
 		}()
 	}
@@ -67,12 +104,12 @@ func createTray() {
 }
 
 func shutdown() {
-	for name := range app.ActiveConfig.Devices {
-		if app.ActiveConfig.Devices[name].HIDDevice == nil {
+	for name := range ApplicationConfig.Devices {
+		if ApplicationConfig.Devices[name].HIDDevice == nil {
 			continue
 		}
 
-		err := app.ActiveConfig.Devices[name].HIDDevice.Close()
+		err := ApplicationConfig.Devices[name].HIDDevice.Close()
 		if err != nil {
 			log.Printf("Failed to close device %s: %v", name, err)
 		}

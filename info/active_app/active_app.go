@@ -8,35 +8,33 @@ import (
 	"unicode"
 )
 
-const payloadKey = "active_app"
-
-func SendActiveWindowData() {
-	payloadInfo := app.ActiveConfig.Payloads[payloadKey]
-	if !payloadInfo.Active {
+func SendActiveWindowData(config app.PayloadConfig, deviceNameToDevice map[string]*app.DeviceConfig) {
+	if !config.Enabled {
 		return
 	}
 
 	applicationName := fetchActiveAppName()
 
 	if applicationName != "" {
-		deviceNames := app.PayloadToDeviceNames[payloadKey]
-
-		for _, name := range deviceNames {
-			device := app.ActiveConfig.Devices[name]
-
+		for deviceName, device := range deviceNameToDevice {
 			if device.HIDDevice == nil {
 				continue
 			}
 
-			data := app.StringToCString(applicationName, device.ReportLength-1) // First byte reserved for Payload Type
+			if !device.HIDDevice.IsOpen() {
+				continue
+			}
 
-			if err := app.SendPayload(device.HIDDevice, app.PayloadActiveApp, data, device.ReportLength); err != nil {
-				log.Printf("Write to device %s failed: %v", name, err)
+			data := app.StringToCString(applicationName, device.ReportLength-1) // First byte reserved for Payload Type
+			err := app.SendPayload(device.HIDDevice, app.PayloadActiveApp, data, device.ReportLength)
+
+			if err != nil {
+				log.Printf("Write to device %s failed: %v", deviceName, err)
 			}
 		}
 	}
 
-	time.Sleep(time.Duration(payloadInfo.RefreshRate) * time.Millisecond)
+	time.Sleep(config.RefreshRate)
 }
 
 func formatAppString(s string) string {

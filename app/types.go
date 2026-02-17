@@ -4,22 +4,21 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"rafaelmartins.com/p/usbhid"
 )
 
-// PayloadType - A unique 8-bit integer which represents a type of payload
 type PayloadType uint8
 
 const (
-	PayloadUnknown PayloadType = iota
-	PayloadActiveApp
+	PayloadActiveApp PayloadType = iota + 1
 	PayloadVolume
 )
 
 type PayloadConfig struct {
-	RefreshRate int  `toml:"refresh_rate"` // RefreshRate - How often data is refreshed in milliseconds
-	Active      bool `toml:"active"`
+	RefreshRate time.Duration `toml:"refresh_rate"`
+	Enabled     bool          `toml:"enabled"`
 }
 
 type DeviceConfig struct {
@@ -29,8 +28,8 @@ type DeviceConfig struct {
 	Usage        HexUint16 `toml:"usage"`
 	ReportLength int       `toml:"report_length"`
 
-	ActivePayloads []string       `toml:"active_payloads"`
-	HIDDevice      *usbhid.Device `toml:"-"`
+	AuthorizedPayloads []string       `toml:"authorized_payloads"`
+	HIDDevice          *usbhid.Device `toml:"-"`
 }
 
 type ApplicationConfig struct {
@@ -39,6 +38,18 @@ type ApplicationConfig struct {
 }
 
 type HexUint16 uint16
+
+func (h HexUint16) Value() uint16 {
+	return uint16(h)
+}
+
+func (h HexUint16) String() string {
+	return fmt.Sprintf("0x%X", uint16(h))
+}
+
+func (h HexUint16) MarshalText() ([]byte, error) {
+	return []byte(h.String()), nil
+}
 
 func (h *HexUint16) UnmarshalText(text []byte) error {
 	s := strings.TrimSpace(string(text))
@@ -56,12 +67,4 @@ func (h *HexUint16) UnmarshalText(text []byte) error {
 
 	*h = HexUint16(v)
 	return nil
-}
-
-func (h HexUint16) MarshalText() ([]byte, error) {
-	return []byte(fmt.Sprintf("0x%X", uint16(h))), nil
-}
-
-func (h HexUint16) GetUint16() uint16 {
-	return uint16(h)
 }
