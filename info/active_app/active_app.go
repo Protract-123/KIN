@@ -25,7 +25,7 @@ func SendActiveWindowData(config app.PayloadConfig, deviceNameToDevice map[strin
 				continue
 			}
 
-			data := app.StringToCString(applicationName, device.ReportLength-1) // First byte reserved for Payload Type
+			data := app.StringToCString(applicationName, device.ReportLength-app.PayloadReservedSpace)
 			err := app.SendPayload(device.HIDDevice, app.PayloadActiveApp, data, device.ReportLength)
 
 			if err != nil {

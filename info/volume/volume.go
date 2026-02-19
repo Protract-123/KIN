@@ -23,7 +23,7 @@ func SendVolumeData(config app.PayloadConfig, deviceNameToDevice map[string]*app
 				continue
 			}
 
-			data := app.StringToCString(volume, device.ReportLength-1) // First byte reserved for Payload Type
+			data := app.StringToCString(volume, device.ReportLength-app.PayloadReservedSpace)
 			err := app.SendPayload(device.HIDDevice, app.PayloadVolume, data, device.ReportLength)
 
 			if err != nil {

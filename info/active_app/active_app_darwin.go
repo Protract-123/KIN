@@ -87,7 +87,6 @@ func fetchActiveAppName() string {
 			_CFArrayGetValueAtIndex(windows, i),
 		)
 
-		// Layer check
 		layerNum := uintptr(
 			_CFDictionaryGetValue(win, _kCGWindowLayer),
 		)
@@ -103,7 +102,6 @@ func fetchActiveAppName() string {
 			continue
 		}
 
-		// Owner name
 		owner := uintptr(
 			_CFDictionaryGetValue(win, _kCGWindowOwnerName),
 		)

@@ -6,6 +6,13 @@ import (
 	"rafaelmartins.com/p/usbhid"
 )
 
+/*
+ 3 bytes reserved for KIN identifier
+ 1 byte reserved for payload type
+*/
+
+const PayloadReservedSpace = 4
+
 func CreateHIDDevice(deviceConfig DeviceConfig) (*usbhid.Device, error) {
 	deviceFilter := func(device *usbhid.Device) bool {
 		if device.VendorId() != deviceConfig.VendorID.Value() {
@@ -40,9 +47,13 @@ func SendPayload(device *usbhid.Device, payloadType PayloadType, payload []byte,
 
 	report := make([]byte, reportSize)
 
-	report[0] = byte(payloadType)
+	report[0] = byte('K')
+	report[1] = byte('I')
+	report[2] = byte('N')
 
-	dataLength := reportSize - 1
+	report[3] = byte(payloadType)
+
+	dataLength := reportSize - PayloadReservedSpace
 	if len(payload) > dataLength {
 		payload = payload[:dataLength]
 	}
