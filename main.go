@@ -2,6 +2,7 @@ package main
 
 import (
 	"KIN/app"
+	"KIN/icon"
 	"KIN/info/active_app"
 	"KIN/info/volume"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"syscall"
 
 	"fyne.io/systray"
-	"fyne.io/systray/example/icon"
 )
 
 type InfoFunction func(config app.PayloadConfig, deviceNameToDevice map[string]*app.DeviceConfig)
@@ -92,11 +92,11 @@ func main() {
 }
 
 func createTray() {
-	systray.SetIcon(icon.Data)
+	icon.SetTrayIcon()
 	systray.SetTooltip("Keyboard Information Negotiator")
 
 	quitMenuItem := systray.AddMenuItem("Quit", "Close KIN")
-	quitMenuItem.SetIcon(icon.Data)
+	quitMenuItem.SetIcon(icon.TrayIcon)
 	go func() {
 		<-quitMenuItem.ClickedCh
 		systray.Quit()
