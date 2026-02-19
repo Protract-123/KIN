@@ -47,9 +47,9 @@ func SendPayload(device *usbhid.Device, payloadType PayloadType, payload []byte,
 
 	report := make([]byte, reportSize)
 
-	report[0] = byte('K')
-	report[1] = byte('I')
-	report[2] = byte('N')
+	report[0] = uint8(0x10)
+	report[1] = uint8(0xFF)
+	report[2] = uint8(0x5B)
 
 	report[3] = byte(payloadType)
 
@@ -58,7 +58,7 @@ func SendPayload(device *usbhid.Device, payloadType PayloadType, payload []byte,
 		payload = payload[:dataLength]
 	}
 
-	copy(report[1:], payload)
+	copy(report[PayloadReservedSpace:], payload)
 
 	err := device.SetOutputReport(0x00, report)
 	return err
