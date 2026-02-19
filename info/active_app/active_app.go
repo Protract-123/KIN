@@ -37,23 +37,20 @@ func SendActiveWindowData(config app.PayloadConfig, deviceNameToDevice map[strin
 	time.Sleep(config.RefreshRate)
 }
 
-func formatAppString(s string) string {
-	s = strings.TrimSpace(s)
-	s = strings.TrimSuffix(strings.ToLower(s), ".exe")
+func formatAppString(appName string) string {
+	appName = strings.TrimSpace(appName)
+	appName = strings.TrimSuffix(strings.ToLower(appName), ".exe")
 
-	// Replace common separators with spaces
 	replacer := strings.NewReplacer(
 		"-", " ",
 		"_", " ",
 	)
-	s = replacer.Replace(s)
+	appName = replacer.Replace(appName)
 
-	// Split on whitespace
-	words := strings.Fields(s)
+	words := strings.Fields(appName)
 
-	// Capitalize each word
-	for i, w := range words {
-		runes := []rune(w)
+	for i, word := range words {
+		runes := []rune(word)
 		if len(runes) == 0 {
 			continue
 		}

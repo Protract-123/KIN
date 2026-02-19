@@ -1,5 +1,11 @@
 # KIN
 
+## TODO
+
+- Tray Features  
+- README.md / ARCHITECTURE.md  
+- Application Icon
+
 ## Architecture
 So the project essentially sends system information to a theoretically infinite amount of keyboards.
 To handle this we should fetch information once per refresh rate, and then the same information to each 

@@ -6,18 +6,18 @@ import (
 	"rafaelmartins.com/p/usbhid"
 )
 
-func CreateHIDDevice(config DeviceConfig) (*usbhid.Device, error) {
+func CreateHIDDevice(deviceConfig DeviceConfig) (*usbhid.Device, error) {
 	deviceFilter := func(device *usbhid.Device) bool {
-		if device.VendorId() != config.VendorID.Value() {
+		if device.VendorId() != deviceConfig.VendorID.Value() {
 			return false
 		}
-		if device.ProductId() != config.ProductID.Value() {
+		if device.ProductId() != deviceConfig.ProductID.Value() {
 			return false
 		}
-		if device.Usage() != config.Usage.Value() {
+		if device.Usage() != deviceConfig.Usage.Value() {
 			return false
 		}
-		if device.UsagePage() != config.UsagePage.Value() {
+		if device.UsagePage() != deviceConfig.UsagePage.Value() {
 			return false
 		}
 

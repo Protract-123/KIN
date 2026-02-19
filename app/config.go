@@ -9,7 +9,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-var DefaultConfig = ApplicationConfig{
+var defaultConfig = ApplicationConfig{
 	Devices: map[string]DeviceConfig{
 		"default": {
 			VendorID:     0xFEED,
@@ -58,12 +58,12 @@ func InitializeConfigFile(configFilePath string) error {
 		}
 	}(configFile)
 
-	marshal, err := toml.Marshal(DefaultConfig)
+	configToml, err := toml.Marshal(defaultConfig)
 	if err != nil {
 		return err
 	}
 
-	_, err = configFile.WriteString(string(marshal))
+	_, err = configFile.WriteString(string(configToml))
 	if err != nil {
 		return err
 	}

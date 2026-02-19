@@ -51,16 +51,16 @@ func (h HexUint16) MarshalText() ([]byte, error) {
 	return []byte(h.String()), nil
 }
 
-func (h *HexUint16) UnmarshalText(text []byte) error {
-	s := strings.TrimSpace(string(text))
+func (h *HexUint16) UnmarshalText(rawString []byte) error {
+	text := strings.TrimSpace(string(rawString))
 
 	base := 10
-	if strings.HasPrefix(s, "0x") {
+	if strings.HasPrefix(text, "0x") {
 		base = 16
-		s = s[2:]
+		text = text[2:]
 	}
 
-	v, err := strconv.ParseUint(s, base, 16)
+	v, err := strconv.ParseUint(text, base, 16)
 	if err != nil {
 		return err
 	}

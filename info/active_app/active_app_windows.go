@@ -80,23 +80,21 @@ var bitnessSuffixes = []string{
 	"win32", "win64",
 }
 
-func stripBitnessSuffix(s string) string {
-	s = strings.TrimSpace(s)
-	lower := strings.ToLower(s)
+func stripBitnessSuffix(appName string) string {
+	appName = strings.TrimSpace(appName)
+	lower := strings.ToLower(appName)
 
 	for _, suf := range bitnessSuffixes {
 		if strings.HasSuffix(lower, suf) {
-			// ensure it's actually a suffix boundary
-			cut := len(s) - len(suf)
+			cut := len(appName) - len(suf)
 			if cut > 0 {
-				prev := s[cut-1]
+				prev := appName[cut-1]
 				if prev == ' ' || prev == '-' || prev == '_' {
-					return strings.TrimSpace(s[:cut-1])
+					return strings.TrimSpace(appName[:cut-1])
 				}
 			}
-			// exact match (e.g. "app64")
-			return strings.TrimSpace(s[:cut])
+			return strings.TrimSpace(appName[:cut])
 		}
 	}
-	return s
+	return appName
 }

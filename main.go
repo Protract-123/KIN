@@ -16,24 +16,24 @@ import (
 
 type InfoFunction func(config app.PayloadConfig, deviceNameToDevice map[string]*app.DeviceConfig)
 
-var PayloadIDToInfoFunction = map[string]InfoFunction{
+var payloadIDToInfoFunction = map[string]InfoFunction{
 	"volume":     volume.SendVolumeData,
 	"active_app": active_app.SendActiveWindowData,
 }
 
-const ConfigDirectory = "KIN"
+const configDirectory = "KIN"
 
-var ApplicationConfig = app.ApplicationConfig{}
+var applicationConfig = app.ApplicationConfig{}
 
 func main() {
 	// Config Initialization
-	base, err := os.UserConfigDir()
+	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
 		log.Printf("Unable to get user config directory: %v", err)
 		shutdown()
 	}
 
-	configDir := filepath.Join(base, ConfigDirectory, "config.toml")
+	configDir := filepath.Join(userConfigDir, configDirectory, "config.toml")
 
 	err = app.InitializeConfigFile(configDir)
 	if err != nil {
@@ -41,14 +41,14 @@ func main() {
 		shutdown()
 	}
 
-	err = app.LoadConfigFromFile(configDir, &ApplicationConfig)
+	err = app.LoadConfigFromFile(configDir, &applicationConfig)
 	if err != nil {
 		log.Printf("Unable to load config: %v", err)
 		shutdown()
 	}
 
 	// HID Device Initialization
-	for name, device := range ApplicationConfig.Devices {
+	for name, device := range applicationConfig.Devices {
 		hidDevice, err := app.CreateHIDDevice(device)
 
 		if err != nil {
@@ -57,15 +57,15 @@ func main() {
 		}
 
 		device.HIDDevice = hidDevice
-		ApplicationConfig.Devices[name] = device
+		applicationConfig.Devices[name] = device
 	}
 
 	// Info Function Loops
-	for payloadId, infoFunction := range PayloadIDToInfoFunction {
+	for payloadId, infoFunction := range payloadIDToInfoFunction {
 		go func() {
 			devices := map[string]*app.DeviceConfig{}
 
-			for name, device := range ApplicationConfig.Devices {
+			for name, device := range applicationConfig.Devices {
 				for _, payload := range device.AuthorizedPayloads {
 					if payloadId == payload {
 						devices[name] = &device
@@ -74,15 +74,15 @@ func main() {
 			}
 
 			for {
-				infoFunction(ApplicationConfig.Payloads[payloadId], devices)
+				infoFunction(applicationConfig.Payloads[payloadId], devices)
 			}
 		}()
 	}
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	exitSignal := make(chan os.Signal, 1)
+	signal.Notify(exitSignal, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-sigCh
+		<-exitSignal
 		systray.Quit()
 	}()
 
@@ -95,21 +95,21 @@ func createTray() {
 	systray.SetIcon(icon.Data)
 	systray.SetTooltip("Keyboard Information Negotiator")
 
-	mQuit := systray.AddMenuItem("Quit", "Close KIN")
-	mQuit.SetIcon(icon.Data)
+	quitMenuItem := systray.AddMenuItem("Quit", "Close KIN")
+	quitMenuItem.SetIcon(icon.Data)
 	go func() {
-		<-mQuit.ClickedCh
+		<-quitMenuItem.ClickedCh
 		systray.Quit()
 	}()
 }
 
 func shutdown() {
-	for name := range ApplicationConfig.Devices {
-		if ApplicationConfig.Devices[name].HIDDevice == nil {
+	for name := range applicationConfig.Devices {
+		if applicationConfig.Devices[name].HIDDevice == nil {
 			continue
 		}
 
-		err := ApplicationConfig.Devices[name].HIDDevice.Close()
+		err := applicationConfig.Devices[name].HIDDevice.Close()
 		if err != nil {
 			log.Printf("Failed to close device %s: %v", name, err)
 		}

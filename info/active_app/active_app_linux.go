@@ -45,7 +45,6 @@ func fetchActiveWindowHyprCtl() (string, error) {
 		return "", err
 	}
 
-	// Target out string is class: jetbrains-goland
 	regex := regexp.MustCompile(`(?m)^\s*class:\s*(.+)$`)
 	match := regex.FindStringSubmatch(out.String())
 	if len(match) < 2 {
