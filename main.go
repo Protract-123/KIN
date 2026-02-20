@@ -5,11 +5,15 @@ import (
 	"KIN/icon"
 	"KIN/info/active_app"
 	"KIN/info/volume"
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"syscall"
+	"time"
 
 	"fyne.io/systray"
 )
@@ -33,15 +37,15 @@ func main() {
 		shutdown()
 	}
 
-	configDir := filepath.Join(userConfigDir, configDirectory, "config.toml")
+	configFilePath := filepath.Join(userConfigDir, configDirectory, "config.toml")
 
-	err = app.InitializeConfigFile(configDir)
+	err = app.InitializeConfigFile(configFilePath)
 	if err != nil {
 		log.Printf("Unable to initialize config: %v", err)
 		shutdown()
 	}
 
-	err = app.LoadConfigFromFile(configDir, &applicationConfig)
+	err = app.LoadConfigFromFile(configFilePath, &applicationConfig)
 	if err != nil {
 		log.Printf("Unable to load config: %v", err)
 		shutdown()
@@ -95,8 +99,68 @@ func createTray() {
 	icon.SetTrayIcon()
 	systray.SetTooltip("Keyboard Information Negotiator")
 
+	var deviceMenuItems = map[string]*systray.MenuItem{}
+	for deviceName := range applicationConfig.Devices {
+		menuItem := systray.AddMenuItem(deviceName, fmt.Sprintf("%s not connected", deviceName))
+		deviceMenuItems[deviceName] = menuItem
+	}
+
+	go func() {
+		for deviceName, device := range applicationConfig.Devices {
+			if menuItem, exists := deviceMenuItems[deviceName]; exists {
+				tooltip := "not connected"
+				statusIcon := icon.CrossIcon
+
+				if device.HIDDevice != nil && device.HIDDevice.IsOpen() {
+					tooltip = "is connected"
+					statusIcon = icon.TickIcon
+				}
+
+				menuItem.SetTooltip(fmt.Sprintf("%s %s", deviceName, tooltip))
+				menuItem.SetIcon(statusIcon)
+			}
+		}
+
+		time.Sleep(1 * time.Second)
+	}()
+
+	systray.AddSeparator()
+
+	openConfigMenuItem := systray.AddMenuItem("Open Config", "Opens the configuration file")
+	openConfigMenuItem.SetIcon(icon.ConfigIcon)
+	go func() {
+		<-openConfigMenuItem.ClickedCh
+
+		userConfigDir, err := os.UserConfigDir()
+
+		if err != nil {
+			log.Printf("Unable to get user config directory: %v", err)
+		}
+
+		configFilePath := filepath.Join(userConfigDir, configDirectory, "config.toml")
+
+		var cmd *exec.Cmd
+
+		switch runtime.GOOS {
+		case "darwin":
+			cmd = exec.Command("open", configFilePath)
+		case "windows":
+			cmd = exec.Command("cmd", "/c", "start", configFilePath)
+		case "linux":
+			cmd = exec.Command("xdg-open", configFilePath)
+		default:
+			log.Printf("Unable to open config file on OS: %s", runtime.GOOS)
+		}
+
+		err = cmd.Start()
+		if err != nil {
+			log.Printf("Unable to open config file: %v", err)
+		}
+	}()
+
 	quitMenuItem := systray.AddMenuItem("Quit", "Close KIN")
-	quitMenuItem.SetIcon(icon.TrayIcon)
+	quitMenuItem.SetIcon(icon.QuitIcon)
+
 	go func() {
 		<-quitMenuItem.ClickedCh
 		systray.Quit()

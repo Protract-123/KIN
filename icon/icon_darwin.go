@@ -8,10 +8,10 @@ import (
 	"fyne.io/systray"
 )
 
-//go:embed "icon.svg"
+//go:embed "export/tray_icon.svg"
 var TrayIcon []byte
 
-//go:embed "icon.png"
+//go:embed "export/tray_icon.png"
 var BackupTrayIcon []byte
 
 func SetTrayIcon() {
