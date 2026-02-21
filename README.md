@@ -33,6 +33,8 @@ Currently supported payloads are:
 Download the appropriate binary for your operating system from the [Releases](https://github.com/Protract-123/KIN/releases)
 page, unzip the archive, and place the binary wherever you'd like.
 
+Note: prebuilt versions for linux-arm64 and windows-arm64 are untested and may not work, but they should.
+
 ### Install from source
 
 The only prerequisite to install from source is Go. To install Go follow the directions found at
