@@ -109,15 +109,21 @@ func createTray() {
 		for deviceName, device := range applicationConfig.Devices {
 			if menuItem, exists := deviceMenuItems[deviceName]; exists {
 				tooltip := "not connected"
+				statusText := "Disconnected"
 				statusIcon := icon.CrossIcon
 
 				if device.HIDDevice != nil && device.HIDDevice.IsOpen() {
 					tooltip = "is connected"
+					statusText = "Connected"
 					statusIcon = icon.TickIcon
 				}
 
 				menuItem.SetTooltip(fmt.Sprintf("%s %s", deviceName, tooltip))
-				menuItem.SetIcon(statusIcon)
+				if statusIcon != nil {
+					menuItem.SetIcon(statusIcon)
+				} else {
+					menuItem.SetTitle(fmt.Sprintf("%s - %s", deviceName, statusText))
+				}
 			}
 		}
 
@@ -127,7 +133,10 @@ func createTray() {
 	systray.AddSeparator()
 
 	openConfigMenuItem := systray.AddMenuItem("Open Config", "Opens the configuration file")
-	openConfigMenuItem.SetIcon(icon.ConfigIcon)
+	if icon.ConfigIcon != nil {
+		openConfigMenuItem.SetIcon(icon.ConfigIcon)
+	}
+
 	go func() {
 		<-openConfigMenuItem.ClickedCh
 
@@ -159,8 +168,9 @@ func createTray() {
 	}()
 
 	quitMenuItem := systray.AddMenuItem("Quit", "Close KIN")
-	quitMenuItem.SetIcon(icon.QuitIcon)
-
+	if icon.QuitIcon != nil {
+		quitMenuItem.SetIcon(icon.QuitIcon)
+	}
 	go func() {
 		<-quitMenuItem.ClickedCh
 		systray.Quit()

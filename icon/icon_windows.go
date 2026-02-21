@@ -8,9 +8,17 @@ import (
 	"fyne.io/systray"
 )
 
-//go:embed "export/tray_icon.ico"
+//go:embed "ico/tray_icon.ico"
 var TrayIcon []byte
 
 func SetTrayIcon() {
 	systray.SetIcon(TrayIcon)
 }
+
+var CrossIcon []byte
+
+var TickIcon []byte
+
+var QuitIcon []byte
+
+var ConfigIcon []byte
