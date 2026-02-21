@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-mac-arm64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build macOS arm64
+        env:
+          GOOS: darwin
+          GOARCH: arm64
+          CGO_ENABLED: 1
+        run: go build -ldflags="-s -w" -trimpath -o KIN .
+
+      - name: Package
+        run: zip -r KIN-darwin-arm64.zip KIN LICENSES/
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: KIN-darwin-arm64
+          path: KIN-darwin-arm64.zip
+
+  build-windows-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: windows
+            goarch: amd64
+            ext: .exe
+            archive: KIN-windows-amd64.zip
+          - goos: windows
+            goarch: arm64
+            ext: .exe
+            archive: KIN-windows-arm64.zip
+          - goos: linux
+            goarch: amd64
+            ext: ""
+            archive: KIN-linux-amd64.zip
+          - goos: linux
+            goarch: arm64
+            ext: ""
+            archive: KIN-linux-arm64.zip
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            go build -ldflags="-s -w -H=windowsgui" -trimpath -o KIN${{ matrix.ext }} .
+          else
+            go build -ldflags="-s -w" -trimpath -o KIN${{ matrix.ext }} .
+          fi
+
+      - name: Package
+        run: zip -r ${{ matrix.archive }} KIN${{ matrix.ext }} LICENSES/
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.archive }}
+          path: ${{ matrix.archive }}
+
+  release:
+    needs: [build-mac-arm64, build-windows-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.zip
