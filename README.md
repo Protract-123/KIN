@@ -1,5 +1,4 @@
 # KIN
-Release Version: v1.0.0
 
 KIN is a portable lightweight tray utility which sends realtime data from your system to USB HID devices.
 It can be integrated with keyboards, macro pads and other HID to make them more intelligent.
