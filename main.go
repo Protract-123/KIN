@@ -137,17 +137,17 @@ func createTray() {
 			log.Printf("Unable to get user config directory: %v", err)
 		}
 
-		configFilePath := filepath.Join(userConfigDir, configDirectory, "config.toml")
+		configDir := filepath.Join(userConfigDir, configDirectory)
 
 		var cmd *exec.Cmd
 
 		switch runtime.GOOS {
 		case "darwin":
-			cmd = exec.Command("open", configFilePath)
+			cmd = exec.Command("open", configDir)
 		case "windows":
-			cmd = exec.Command("cmd", "/c", "start", configFilePath)
+			cmd = exec.Command("cmd", "/c", "start", configDir)
 		case "linux":
-			cmd = exec.Command("xdg-open", configFilePath)
+			cmd = exec.Command("xdg-open", configDir)
 		default:
 			log.Printf("Unable to open config file on OS: %s", runtime.GOOS)
 		}
