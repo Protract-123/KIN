@@ -138,32 +138,34 @@ func createTray() {
 	}
 
 	go func() {
-		<-openConfigMenuItem.ClickedCh
+		for {
+			<-openConfigMenuItem.ClickedCh
 
-		userConfigDir, err := os.UserConfigDir()
+			userConfigDir, err := os.UserConfigDir()
 
-		if err != nil {
-			log.Printf("Unable to get user config directory: %v", err)
-		}
+			if err != nil {
+				log.Printf("Unable to get user config directory: %v", err)
+			}
 
-		configDir := filepath.Join(userConfigDir, configDirectory)
+			configDir := filepath.Join(userConfigDir, configDirectory)
 
-		var cmd *exec.Cmd
+			var cmd *exec.Cmd
 
-		switch runtime.GOOS {
-		case "darwin":
-			cmd = exec.Command("open", configDir)
-		case "windows":
-			cmd = exec.Command("cmd", "/c", "start", configDir)
-		case "linux":
-			cmd = exec.Command("xdg-open", configDir)
-		default:
-			log.Printf("Unable to open config file on OS: %s", runtime.GOOS)
-		}
+			switch runtime.GOOS {
+			case "darwin":
+				cmd = exec.Command("open", configDir)
+			case "windows":
+				cmd = exec.Command("cmd", "/c", "start", configDir)
+			case "linux":
+				cmd = exec.Command("xdg-open", configDir)
+			default:
+				log.Printf("Unable to open config file on OS: %s", runtime.GOOS)
+			}
 
-		err = cmd.Start()
-		if err != nil {
-			log.Printf("Unable to open config file: %v", err)
+			err = cmd.Start()
+			if err != nil {
+				log.Printf("Unable to open config file: %v", err)
+			}
 		}
 	}()
 
