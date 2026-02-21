@@ -1,5 +1,6 @@
-## Licenses
-This directory contains the licenses of all third party libraries/software used by the project. A list of all these 
+# Licenses
+
+This directory contains the licenses of all third party libraries/software used by the project. A list of all these
 libraries/software along with their license type can be found below.
 
 | Dependency                                                      | Version | License      | License File                                                                     |
