@@ -3,11 +3,13 @@
 KIN is a portable lightweight tray utility which sends realtime data from your system to USB HID devices.
 It can be integrated with keyboards, macro pads and other HID to make them more intelligent.
 
-An example of an HID device which uses KIN is my [hackpad](https://github.com/Protract-123/Hackpad/tree/main/firmware/qmk).
-It uses KIN in order to have per application macros, and to display volume when changing volume
-for finer adjustment
+**Showcase**: Here's a video showcasing what KIN looks like in action: <https://youtu.be/6Xd1AGg_jqw?si=QLRqIY1OVC_iMn7x>
 
-Currently supported payloads are:
+To be exact the video showcases my [hackpad](https://github.com/Protract-123/Hackpad/tree/main/firmware/qmk) and how 
+I've integrated it with KIN. It uses KIN in order to have per-application macros and to display system
+information on the screen
+
+**Currently supported payloads are:**
 
 | Payload    | Description                               | Default refresh rate |
 |------------|-------------------------------------------|----------------------|
